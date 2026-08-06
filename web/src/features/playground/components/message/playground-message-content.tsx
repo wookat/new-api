@@ -80,6 +80,7 @@ export function PlaygroundMessageContent({
     sources,
   } = getMessageContentState(message, versionContent)
   const isError = isErrorMessage(message)
+  const images = message.images ?? []
   const isMessageFinal =
     message.status !== MESSAGE_STATUS.LOADING &&
     message.status !== MESSAGE_STATUS.STREAMING
@@ -115,6 +116,24 @@ export function PlaygroundMessageContent({
           <ReasoningTrigger />
           <ReasoningContent>{reasoningContent}</ReasoningContent>
         </Reasoning>
+      )}
+
+      {images.length > 0 && (
+        <div
+          className={cn(
+            'mb-2 flex flex-wrap gap-2',
+            alignment === 'right' ? 'justify-end' : 'justify-start'
+          )}
+        >
+          {images.map((imageUrl) => (
+            <img
+              alt={t('Attached image')}
+              className='border-border/60 max-h-48 max-w-60 rounded-lg border object-cover'
+              key={imageUrl.slice(-64)}
+              src={imageUrl}
+            />
+          ))}
+        </div>
       )}
 
       {showLoader && (

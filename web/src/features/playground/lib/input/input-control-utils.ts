@@ -21,6 +21,7 @@ import type { GroupOption, ModelOption } from '../../types'
 type InputControlStateOptions = {
   disabled?: boolean
   groups: GroupOption[]
+  hasAttachments?: boolean
   hasStopHandler: boolean
   isGenerating?: boolean
   isModelLoading?: boolean
@@ -34,24 +35,107 @@ type InputControlState = {
   shouldShowStop: boolean
 }
 
-type SubmittableInputMessage = {
-  text?: string | null
+type SubmittableInputFile = {
+  url?: string
+  mediaType?: string
+  filename?: string
 }
 
-export function getSubmittableInputText(
-  message: SubmittableInputMessage,
-  disabled?: boolean
-): string | null {
-  if (disabled || !message.text?.trim()) {
+type SubmittableInputMessage = {
+  text?: string | null
+  files?: SubmittableInputFile[]
+}
+
+export type SubmittableInput = {
+  text: string
+  images: string[]
+  unsupportedFiles: string[]
+}
+
+const TEXT_LIKE_MEDIA_TYPES = new Set([
+  'application/json',
+  'application/xml',
+  'application/x-yaml',
+  'application/javascript',
+  'application/typescript',
+  'application/sql',
+  'application/csv',
+])
+
+function isTextLikeMediaType(mediaType: string): boolean {
+  return mediaType.startsWith('text/') || TEXT_LIKE_MEDIA_TYPES.has(mediaType)
+}
+
+function decodeTextDataUrl(url: string): string | null {
+  const [header, payload] = url.split(',', 2)
+  if (payload === undefined) {
     return null
   }
 
-  return message.text
+  try {
+    if (header.includes(';base64')) {
+      const binary = atob(payload)
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+      return new TextDecoder().decode(bytes)
+    }
+    return decodeURIComponent(payload)
+  } catch {
+    return null
+  }
+}
+
+export function getSubmittableInput(
+  message: SubmittableInputMessage,
+  disabled?: boolean
+): SubmittableInput | null {
+  if (disabled) {
+    return null
+  }
+
+  const text = message.text?.trim() ? message.text : ''
+  const images: string[] = []
+  const inlinedTexts: string[] = []
+  const unsupportedFiles: string[] = []
+
+  for (const file of message.files ?? []) {
+    const mediaType = file.mediaType ?? ''
+    const url = file.url ?? ''
+
+    if (!url) {
+      unsupportedFiles.push(file.filename || mediaType || 'attachment')
+      continue
+    }
+
+    if (mediaType.startsWith('image/')) {
+      images.push(url)
+      continue
+    }
+
+    if (isTextLikeMediaType(mediaType) && url.startsWith('data:')) {
+      const decoded = decodeTextDataUrl(url)
+      if (decoded !== null) {
+        const name = file.filename || 'attachment'
+        inlinedTexts.push(`[File: ${name}]\n\`\`\`\n${decoded}\n\`\`\``)
+        continue
+      }
+    }
+
+    unsupportedFiles.push(file.filename || mediaType || 'attachment')
+  }
+
+  const combinedText = [...inlinedTexts, text].filter(Boolean).join('\n\n')
+
+  if (!combinedText && images.length === 0 && unsupportedFiles.length === 0) {
+    return null
+  }
+
+  return { text: combinedText, images, unsupportedFiles }
 }
 
 export function getInputControlState({
   disabled,
   groups,
+  hasAttachments,
   hasStopHandler,
   isGenerating,
   isModelLoading,
@@ -61,7 +145,10 @@ export function getInputControlState({
   const hasModels = models.length > 0
 
   return {
-    canSubmit: !disabled && hasModels && text.trim().length > 0,
+    canSubmit:
+      !disabled &&
+      hasModels &&
+      (text.trim().length > 0 || Boolean(hasAttachments)),
     isSelectorDisabled: disabled || isModelLoading || groups.length === 0,
     shouldShowStop: Boolean(isGenerating && hasStopHandler),
   }

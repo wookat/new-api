@@ -18,15 +18,18 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import {
   PromptInput,
+  PromptInputAttachment,
+  PromptInputAttachments,
   PromptInputFooter,
   PromptInputTextarea,
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 
-import { getSubmittableInputText } from '../../lib'
+import { getSubmittableInput } from '../../lib'
 import type {
   ModelOption,
   GroupOption,
@@ -36,9 +39,11 @@ import type {
 import { PlaygroundInputControls } from './playground-input-controls'
 import { PlaygroundInputTools } from './playground-input-tools'
 
+const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024
+
 interface PlaygroundInputProps {
   config: PlaygroundConfig
-  onSubmit: (text: string) => void
+  onSubmit: (text: string, images?: string[]) => void
   onStop?: () => void
   disabled?: boolean
   isGenerating?: boolean
@@ -85,10 +90,26 @@ export function PlaygroundInput({
   const [text, setText] = useState('')
 
   const handleSubmit = (message: PromptInputMessage) => {
-    const submittableText = getSubmittableInputText(message, disabled)
+    const submittable = getSubmittableInput(message, disabled)
 
-    if (!submittableText) return
-    onSubmit(submittableText)
+    // Throwing keeps PromptInput from clearing attachments, so the
+    // user can adjust the message and retry.
+    if (!submittable) {
+      throw new Error('empty-input')
+    }
+
+    if (submittable.unsupportedFiles.length > 0) {
+      toast.error(t('Unsupported attachment type'), {
+        description: submittable.unsupportedFiles.join(', '),
+      })
+      throw new Error('unsupported-attachment')
+    }
+
+    if (!submittable.text && submittable.images.length === 0) {
+      throw new Error('empty-input')
+    }
+
+    onSubmit(submittable.text, submittable.images)
     setText('')
   }
 
@@ -97,8 +118,22 @@ export function PlaygroundInput({
       <PromptInput
         className='relative'
         groupClassName='bg-background/95 dark:bg-background/80 border-border/70 shadow-[0_18px_60px_-32px_rgba(0,0,0,0.65)] ring-1 ring-foreground/5 rounded-xl overflow-hidden transition-all duration-200 focus-within:border-primary/45 focus-within:ring-primary/15 focus-within:shadow-[0_22px_70px_-34px_rgba(0,0,0,0.75)]'
+        maxFileSize={MAX_ATTACHMENT_BYTES}
+        multiple
+        onError={(error) => {
+          if (error.code === 'max_file_size') {
+            toast.error(t('Attachment is too large'))
+            return
+          }
+          toast.error(t('Unable to add attachment'))
+        }}
         onSubmit={handleSubmit}
       >
+        <div className='flex flex-wrap items-center gap-2 empty:hidden [&:not(:empty)]:px-4 [&:not(:empty)]:pt-3'>
+          <PromptInputAttachments>
+            {(attachment) => <PromptInputAttachment data={attachment} />}
+          </PromptInputAttachments>
+        </div>
         <PromptInputTextarea
           autoComplete='off'
           autoCorrect='off'
