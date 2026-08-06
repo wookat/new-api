@@ -76,6 +76,9 @@ const messageSchema = z.object({
   from: messageRoleSchema,
   versions: z.array(messageVersionSchema).min(1),
   images: z.array(z.string()).optional(),
+  documents: z
+    .array(z.object({ name: z.string(), url: z.string() }))
+    .optional(),
   createdAt: z.number().optional(),
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),

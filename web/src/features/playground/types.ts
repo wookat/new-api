@@ -28,11 +28,17 @@ export interface MessageVersion {
   content: string
 }
 
+export interface DocumentAttachment {
+  name: string
+  url: string
+}
+
 export interface Message {
   key: string
   from: MessageRole
   versions: MessageVersion[]
   images?: string[]
+  documents?: DocumentAttachment[]
   createdAt?: number
   startedAt?: number
   completedAt?: number
@@ -59,10 +65,14 @@ export interface ChatCompletionMessage {
 }
 
 export interface ContentPart {
-  type: 'text' | 'image_url'
+  type: 'text' | 'image_url' | 'file'
   text?: string
   image_url?: {
     url: string
+  }
+  file?: {
+    filename: string
+    file_data: string
   }
 }
 

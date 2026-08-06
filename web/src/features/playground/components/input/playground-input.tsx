@@ -31,6 +31,7 @@ import {
 
 import { getSubmittableInput } from '../../lib'
 import type {
+  DocumentAttachment,
   ModelOption,
   GroupOption,
   ParameterEnabled,
@@ -43,7 +44,11 @@ const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024
 
 interface PlaygroundInputProps {
   config: PlaygroundConfig
-  onSubmit: (text: string, images?: string[]) => void
+  onSubmit: (
+    text: string,
+    images?: string[],
+    documents?: DocumentAttachment[]
+  ) => void
   onStop?: () => void
   disabled?: boolean
   isGenerating?: boolean
@@ -105,11 +110,15 @@ export function PlaygroundInput({
       throw new Error('unsupported-attachment')
     }
 
-    if (!submittable.text && submittable.images.length === 0) {
+    if (
+      !submittable.text &&
+      submittable.images.length === 0 &&
+      submittable.documents.length === 0
+    ) {
       throw new Error('empty-input')
     }
 
-    onSubmit(submittable.text, submittable.images)
+    onSubmit(submittable.text, submittable.images, submittable.documents)
     setText('')
   }
 

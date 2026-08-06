@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { FileTextIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -81,6 +82,7 @@ export function PlaygroundMessageContent({
   } = getMessageContentState(message, versionContent)
   const isError = isErrorMessage(message)
   const images = message.images ?? []
+  const documents = message.documents ?? []
   const isMessageFinal =
     message.status !== MESSAGE_STATUS.LOADING &&
     message.status !== MESSAGE_STATUS.STREAMING
@@ -132,6 +134,25 @@ export function PlaygroundMessageContent({
               key={imageUrl.slice(-64)}
               src={imageUrl}
             />
+          ))}
+        </div>
+      )}
+
+      {documents.length > 0 && (
+        <div
+          className={cn(
+            'mb-2 flex flex-wrap gap-2',
+            alignment === 'right' ? 'justify-end' : 'justify-start'
+          )}
+        >
+          {documents.map((doc) => (
+            <div
+              className='border-border/60 bg-muted/40 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm'
+              key={`${doc.name}-${doc.url.slice(-32)}`}
+            >
+              <FileTextIcon className='text-muted-foreground size-4 shrink-0' />
+              <span className='max-w-48 truncate'>{doc.name}</span>
+            </div>
           ))}
         </div>
       )}

@@ -69,3 +69,46 @@ describe('user messages with image attachments', () => {
     assert.equal(messages[1].from, 'assistant')
   })
 })
+
+const PDF_DATA_URL = 'data:application/pdf;base64,JVBERi0='
+
+describe('user messages with document attachments', () => {
+  test('formatMessageForAPI emits file content parts for documents', () => {
+    const message = createUserMessage(
+      'summarize',
+      Date.now(),
+      [],
+      [{ name: 'report.pdf', url: PDF_DATA_URL }]
+    )
+    const formatted = formatMessageForAPI(message)
+    assert.deepEqual(formatted.content, [
+      { type: 'text', text: 'summarize' },
+      {
+        type: 'file',
+        file: { filename: 'report.pdf', file_data: PDF_DATA_URL },
+      },
+    ])
+  })
+
+  test('document-only user message is valid', () => {
+    const docOnly = createUserMessage(
+      '',
+      Date.now(),
+      [],
+      [{ name: 'report.pdf', url: PDF_DATA_URL }]
+    )
+    assert.equal(isValidMessage(docOnly), true)
+  })
+
+  test('appendUserMessagePair threads documents onto the user message', () => {
+    const messages = appendUserMessagePair(
+      [],
+      'read',
+      [],
+      [{ name: 'report.pdf', url: PDF_DATA_URL }]
+    )
+    assert.deepEqual(messages[0].documents, [
+      { name: 'report.pdf', url: PDF_DATA_URL },
+    ])
+  })
+})
