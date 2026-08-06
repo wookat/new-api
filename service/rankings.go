@@ -199,6 +199,9 @@ func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time) (*Rankings
 	}
 
 	meta := buildRankingModelMeta()
+	currentTotals = filterRankingTotals(currentTotals, meta)
+	previousTotals = filterRankingTotals(previousTotals, meta)
+	currentBuckets = filterRankingBuckets(currentBuckets, meta)
 	totalTokens := sumRankingTokens(currentTotals)
 	previousRankByModel := rankingRankMap(previousTotals)
 	previousTokensByModel := rankingTokenMap(previousTotals)
@@ -231,6 +234,29 @@ func previousRankingTimeRange(config rankingPeriodConfig, currentStart int64) (i
 	previousEnd := currentStart - 1
 	previousStart := time.Unix(currentStart, 0).Add(-config.duration).Unix()
 	return previousStart, previousEnd
+}
+
+// filterRankingTotals keeps only models that are currently available on the
+// platform (present in the pricing metadata), so delisted or disabled models
+// do not appear in public rankings even if they have historical usage.
+func filterRankingTotals(totals []model.RankingQuotaTotal, meta map[string]rankingModelMeta) []model.RankingQuotaTotal {
+	filtered := make([]model.RankingQuotaTotal, 0, len(totals))
+	for _, item := range totals {
+		if _, ok := meta[item.ModelName]; ok {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
+}
+
+func filterRankingBuckets(buckets []model.RankingQuotaBucket, meta map[string]rankingModelMeta) []model.RankingQuotaBucket {
+	filtered := make([]model.RankingQuotaBucket, 0, len(buckets))
+	for _, item := range buckets {
+		if _, ok := meta[item.ModelName]; ok {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
 }
 
 func buildRankingModelMeta() map[string]rankingModelMeta {
