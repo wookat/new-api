@@ -41,33 +41,31 @@ export function Features(_props: FeaturesProps) {
     {
       id: 'fast',
       num: '01',
-      title: t('Lightning Fast'),
+      title: t('Drop-in OpenAI compatibility'),
       desc: t(
-        'Optimized network architecture ensures millisecond response times'
+        'Keep your SDK and your code: only the Base URL and the key change. Chat Completions, streaming and tool calling all behave the same across every model below.'
       ),
       span: 'md:col-span-2',
       icon: <Zap className='size-4 text-blue-400' />,
       visual: (
         <div className='mt-4 grid grid-cols-3 gap-2'>
-          {['OpenAI', 'Claude', 'Gemini', 'DeepSeek', 'Qwen', 'Llama'].map(
-            (name) => (
-              <div
-                key={name}
-                className='border-border/30 bg-muted/20 text-muted-foreground flex items-center justify-center rounded-lg border px-3 py-2 text-xs transition-colors duration-300 hover:border-blue-500/30 hover:bg-blue-500/5'
-              >
-                {name}
-              </div>
-            )
-          )}
+          {['Claude', 'Gemini', 'GPT', 'GLM', 'Kimi', 'SWE'].map((name) => (
+            <div
+              key={name}
+              className='border-border/30 bg-muted/20 text-muted-foreground flex items-center justify-center rounded-lg border px-3 py-2 text-xs transition-colors duration-300 hover:border-blue-500/30 hover:bg-blue-500/5'
+            >
+              {name}
+            </div>
+          ))}
         </div>
       ),
     },
     {
       id: 'secure',
       num: '02',
-      title: t('Secure & Reliable'),
+      title: t('Keys scoped by channel'),
       desc: t(
-        'Enterprise-grade security with comprehensive permission management'
+        'Issue a key per channel group so each one only reaches its own models and quota.'
       ),
       span: 'md:col-span-1',
       icon: <Shield className='size-4 text-emerald-400' />,
@@ -102,13 +100,15 @@ export function Features(_props: FeaturesProps) {
     {
       id: 'global',
       num: '03',
-      title: t('Global Coverage'),
-      desc: t('Multi-region deployment for stable global access'),
+      title: t('Failover built in'),
+      desc: t(
+        'Health probes, automatic retries and channel disabling keep a bad upstream from breaking your app.'
+      ),
       span: 'md:col-span-1',
       icon: <Globe className='size-4 text-violet-400' />,
       visual: (
         <div className='mt-4 space-y-2'>
-          {[t('Load Balancing'), t('Rate Limiting'), t('Cost Tracking')].map(
+          {[t('Health probe'), t('Auto retry'), t('Channel failover')].map(
             (step, i) => (
               <div key={step} className='flex items-center gap-2'>
                 <div
@@ -131,8 +131,10 @@ export function Features(_props: FeaturesProps) {
     {
       id: 'developer',
       num: '04',
-      title: t('Developer Friendly'),
-      desc: t('Compatible API routes for common AI application workflows'),
+      title: t('Streaming, tools and multimodal'),
+      desc: t(
+        'SSE streaming, Function Calling with multi-turn tool results, and image or PDF input on Gemini and Claude 4.6 models.'
+      ),
       span: 'md:col-span-2',
       icon: <Code className='size-4 text-amber-400' />,
       visual: (
@@ -159,23 +161,31 @@ export function Features(_props: FeaturesProps) {
   const additionalFeatures = [
     {
       icon: <Gauge className='size-5' strokeWidth={1.5} />,
-      title: t('High Performance'),
-      desc: t('Support for high concurrency with automatic load balancing'),
+      title: t('Predictable throughput'),
+      desc: t(
+        'Per-user rate limits and upstream concurrency shaping keep latency stable under load.'
+      ),
     },
     {
       icon: <DollarSign className='size-5' strokeWidth={1.5} />,
       title: t('Transparent Billing'),
-      desc: t('Pay-as-you-go with real-time usage monitoring'),
+      desc: t(
+        'Billed on real token usage, every unit price published in the model square, every call in your logs.'
+      ),
     },
     {
       icon: <Users className='size-5' strokeWidth={1.5} />,
-      title: t('Team Collaboration'),
-      desc: t('Multi-user management with flexible permission allocation'),
+      title: t('Your data stays yours'),
+      desc: t(
+        'Only request metadata and token counts are logged; message bodies are never stored or used for training.'
+      ),
     },
     {
       icon: <HeartHandshake className='size-5' strokeWidth={1.5} />,
       title: t('Open Source'),
-      desc: t('Community driven, self-hosted, and extensible'),
+      desc: t(
+        'Built on the AGPL-licensed New API project, self-hostable and auditable.'
+      ),
     },
   ]
 
@@ -187,9 +197,9 @@ export function Features(_props: FeaturesProps) {
             {t('Core Features')}
           </p>
           <h2 className='text-2xl leading-tight font-bold tracking-tight md:text-3xl'>
-            {t('Built for developers,')}
+            {t('Everything you need')}
             <br />
-            {t('designed for scale')}
+            {t('to ship on top of LLMs')}
           </h2>
         </AnimateInView>
 

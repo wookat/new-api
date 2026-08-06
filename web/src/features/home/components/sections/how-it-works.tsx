@@ -27,24 +27,26 @@ export function HowItWorks() {
   const steps = [
     {
       num: '1',
-      title: t('Configure'),
+      title: t('Create a key'),
       desc: t(
-        'Add your API keys, set up channels and configure access permissions'
+        'Sign up and create an API key in the console, with its own quota and channel group.'
       ),
       icon: <Settings className='size-6' strokeWidth={1.5} />,
     },
     {
       num: '2',
-      title: t('Connect'),
+      title: t('Point your client at it'),
       desc: t(
-        'Connect through OpenAI, Claude, Gemini, and other compatible API routes'
+        'Set the Base URL of any OpenAI-compatible SDK or app to this gateway and pick a model.'
       ),
       icon: <Zap className='size-6' strokeWidth={1.5} />,
     },
     {
       num: '3',
-      title: t('Monitor'),
-      desc: t('Track usage, costs and performance with real-time analytics'),
+      title: t('Watch usage and spend'),
+      desc: t(
+        'Every call lands in the logs with its token usage and cost, in real time.'
+      ),
       icon: <BarChart3 className='size-6' strokeWidth={1.5} />,
     },
   ]
