@@ -111,7 +111,7 @@ export function Hero(props: HeroProps) {
               <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75' />
               <span className='relative inline-flex size-1.5 rounded-full bg-blue-500 dark:bg-blue-400' />
             </span>
-            <span>{t('One API Key for 50+ AI models')}</span>
+            <span>{t('One API Key for every model on the platform')}</span>
           </div>
 
           <h1
@@ -121,7 +121,7 @@ export function Hero(props: HeroProps) {
             {t('One key, every model:')}
             <br />
             <span className='bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent'>
-              {t('Claude, Gemini, GPT and more')}
+              {t('Claude, Gemini, GLM and more')}
             </span>
           </h1>
           <p
@@ -129,7 +129,7 @@ export function Hero(props: HeroProps) {
             style={{ animationDelay: '120ms' }}
           >
             {t(
-              'An OpenAI-compatible gateway that aggregates Claude, Gemini, GPT, GLM and Kimi behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.'
+              'An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.'
             )}
           </p>
 
