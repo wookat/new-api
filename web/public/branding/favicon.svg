@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="gOrbit" x1="8" y1="56" x2="56" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2F5A96"/>
+      <stop offset="0.55" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 7 L52.6 19 V45 L32 57 L11.4 45 V19 Z" fill="none" stroke="url(#gOrbit)" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="32" cy="32" rx="26" ry="9.5" fill="none" stroke="url(#gOrbit)" stroke-width="2.6" transform="rotate(-24 32 32)" opacity="0.85"/>
+  <circle cx="53.5" cy="21.5" r="4.4" fill="#22D3EE"/>
+  <circle cx="32" cy="32" r="5.2" fill="url(#gOrbit)"/>
+</svg>
