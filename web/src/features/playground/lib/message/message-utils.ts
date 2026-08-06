@@ -24,6 +24,7 @@ import type {
   MessageVersion,
   ChatCompletionMessage,
   ContentPart,
+  DocumentAttachment,
 } from '../../types'
 
 /**
@@ -77,7 +78,8 @@ export function updateCurrentVersionContent(
 export function createUserMessage(
   content: string,
   createdAt: number = Date.now(),
-  images: string[] = []
+  images: string[] = [],
+  documents: DocumentAttachment[] = []
 ): Message {
   const message: Message = {
     key: nanoid(),
@@ -88,6 +90,10 @@ export function createUserMessage(
 
   if (images.length > 0) {
     message.images = images
+  }
+
+  if (documents.length > 0) {
+    message.documents = documents
   }
 
   return message
@@ -118,11 +124,13 @@ export function createLoadingAssistantMessage(
  */
 export function buildMessageContent(
   text: string,
-  imageUrls: string[] = []
+  imageUrls: string[] = [],
+  documents: DocumentAttachment[] = []
 ): string | ContentPart[] {
   const validImages = imageUrls.filter((url) => url.trim() !== '')
+  const validDocuments = documents.filter((doc) => doc.url.trim() !== '')
 
-  if (validImages.length === 0) {
+  if (validImages.length === 0 && validDocuments.length === 0) {
     return text
   }
 
@@ -134,6 +142,10 @@ export function buildMessageContent(
     ...validImages.map((url) => ({
       type: 'image_url' as const,
       image_url: { url: url.trim() },
+    })),
+    ...validDocuments.map((doc) => ({
+      type: 'file' as const,
+      file: { filename: doc.name, file_data: doc.url.trim() },
     })),
   ]
 
@@ -163,7 +175,11 @@ export function formatMessageForAPI(message: Message): ChatCompletionMessage {
   const currentVersion = getCurrentVersion(message)
   return {
     role: message.from,
-    content: buildMessageContent(currentVersion.content, message.images ?? []),
+    content: buildMessageContent(
+      currentVersion.content,
+      message.images ?? [],
+      message.documents ?? []
+    ),
   }
 }
 
@@ -183,7 +199,8 @@ export function isValidMessage(message: Message): boolean {
   if (
     message.from === MESSAGE_ROLES.USER &&
     !hasMessageContent(message) &&
-    !message.images?.length
+    !message.images?.length &&
+    !message.documents?.length
   ) {
     return false
   }

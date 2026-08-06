@@ -89,6 +89,40 @@ describe('getSubmittableInput', () => {
     assert.deepEqual(result.images, [])
   })
 
+  test('collects PDF attachments as documents', () => {
+    const result = getSubmittableInput({
+      text: 'summarize this',
+      files: [
+        {
+          url: 'data:application/pdf;base64,JVBERi0=',
+          mediaType: 'application/pdf',
+          filename: 'report.pdf',
+        },
+      ],
+    })
+    assert.ok(result)
+    assert.deepEqual(result.documents, [
+      { name: 'report.pdf', url: 'data:application/pdf;base64,JVBERi0=' },
+    ])
+    assert.deepEqual(result.unsupportedFiles, [])
+  })
+
+  test('allows document-only submissions without text', () => {
+    const result = getSubmittableInput({
+      text: '',
+      files: [
+        {
+          url: 'data:application/pdf;base64,JVBERi0=',
+          mediaType: 'application/pdf',
+          filename: 'report.pdf',
+        },
+      ],
+    })
+    assert.ok(result)
+    assert.equal(result.text, '')
+    assert.equal(result.documents.length, 1)
+  })
+
   test('reports unsupported binary files instead of silently dropping them', () => {
     const result = getSubmittableInput({
       text: 'hi',

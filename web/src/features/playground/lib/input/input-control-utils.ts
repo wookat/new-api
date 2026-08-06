@@ -49,8 +49,11 @@ type SubmittableInputMessage = {
 export type SubmittableInput = {
   text: string
   images: string[]
+  documents: { name: string; url: string }[]
   unsupportedFiles: string[]
 }
+
+const DOCUMENT_MEDIA_TYPES = new Set(['application/pdf'])
 
 const TEXT_LIKE_MEDIA_TYPES = new Set([
   'application/json',
@@ -94,6 +97,7 @@ export function getSubmittableInput(
 
   const text = message.text?.trim() ? message.text : ''
   const images: string[] = []
+  const documents: { name: string; url: string }[] = []
   const inlinedTexts: string[] = []
   const unsupportedFiles: string[] = []
 
@@ -111,6 +115,11 @@ export function getSubmittableInput(
       continue
     }
 
+    if (DOCUMENT_MEDIA_TYPES.has(mediaType) && url.startsWith('data:')) {
+      documents.push({ name: file.filename || 'document.pdf', url })
+      continue
+    }
+
     if (isTextLikeMediaType(mediaType) && url.startsWith('data:')) {
       const decoded = decodeTextDataUrl(url)
       if (decoded !== null) {
@@ -125,11 +134,16 @@ export function getSubmittableInput(
 
   const combinedText = [...inlinedTexts, text].filter(Boolean).join('\n\n')
 
-  if (!combinedText && images.length === 0 && unsupportedFiles.length === 0) {
+  if (
+    !combinedText &&
+    images.length === 0 &&
+    documents.length === 0 &&
+    unsupportedFiles.length === 0
+  ) {
     return null
   }
 
-  return { text: combinedText, images, unsupportedFiles }
+  return { text: combinedText, images, documents, unsupportedFiles }
 }
 
 export function getInputControlState({
