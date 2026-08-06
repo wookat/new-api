@@ -1,7 +1,7 @@
 # AICDKS 站点品牌资源
 
-本目录说明 `web/public/branding/` 下随前端一起发布的 AICDKS 品牌静态资源，
-以及上线时需要在管理台填写的运行时站点选项。仅涉及可配置的站点品牌部分；
+本文档说明 `web/public/branding/` 下随前端一起发布的 AICDKS 品牌静态资源，
+以及上线时在管理台填写的运行时站点选项。仅涉及可配置的站点品牌部分；
 new-api / QuantumNous 的项目署名、版权与归属信息一律保持不变（见 AGENTS.md
 Project Governance）。
 
@@ -9,19 +9,27 @@ Project Governance）。
 
 | 文件 | 用途 |
 |---|---|
-| `aicdks-mark.svg` | 图标（Logo 选项 / favicon，深浅背景通用） |
-| `aicdks-logo-light.svg` | 横版标识，浅色背景用 |
-| `aicdks-logo-dark.svg` | 横版标识，深色背景用 |
-| `aicdks-apple-touch-icon.png` | iOS 主屏图标（180×180） |
+| `home.html` | 品牌化首页（自包含、响应式、跟随站点深浅色主题），供 `HomePageContent` 引用 |
+| `v2/{orbit,aurora,stack,circuit}-mark.svg` | 四套候选 logo 图标（Logo 选项 / favicon） |
+| `v2/*-logo-{light,dark}.svg` | 对应深浅色横版 lockup |
+| `aicdks-mark.svg` 等 | v1 旧方案，保留备选 |
 
-品牌源文件（三个候选方案、色板、预览图）在 `wookat/llm-relay` 仓库 `site/brand/`。
+品牌源文件与 PNG 渲染稿在 `wookat/llm-relay` 仓库 `site/brand/`（v1）与 `site/brand/v2/`（v2 四方案）。
 
 ## 上线时的运行时选项（管理台 → 系统设置 → 通用）
 
 | 选项 | 值 |
 |---|---|
 | 系统名称（SystemName） | `AICDKS API` |
-| Logo | `/branding/aicdks-mark.svg`（favicon 与页面标题随之自动应用） |
+| Logo | `/branding/v2/<老板选定方案>-mark.svg`（favicon 与页面标题随之自动应用） |
+| 首页内容（HomePageContent） | `/branding/home.html`（同源 URL，前端以 iframe 呈现并自动同步深浅色主题） |
 | 页脚（Footer） | `<a href="https://api.aicdks.com">AICDKS API</a> · <a href="https://aicdks.com">AI CDK 商店</a>` |
 
 以上均为 new-api 原生支持的站点自定义选项，不涉及代码行为变化。
+
+## home.html 说明
+
+- 自包含单文件（内联 CSS，无构建步骤），移动优先响应式。
+- 监听宿主页 `postMessage` 的 `themeMode`（new-api 首页 iframe 会在加载与主题切换时发送），自动切换深浅色。
+- 所有跳转链接带 `target="_top"`，配合 new-api iframe sandbox 的
+  `allow-top-navigation-by-user-activation` 在用户点击时跳出 iframe。

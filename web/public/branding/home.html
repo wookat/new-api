@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AICDKS API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand: #2f5a96; --brand-strong: #274b7d; --accent: #22d3ee;
+    --bg: #ffffff; --bg-soft: #f6f8fb; --card: #ffffff; --border: #e2e8f0;
+    --text: #0f172a; --muted: #5b6b81; --code-bg: #0d1526; --shadow: 0 12px 32px rgba(15, 23, 42, .08);
+  }
+  html.dark {
+    --bg: #0b1220; --bg-soft: #0e1728; --card: #111c30; --border: #22314d; --text: #f1f5f9; --muted: #94a3b8; --code-bg: #0a1020; --shadow: 0 12px 32px rgba(0, 0, 0, .4);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem; }
+  .hero { position: relative; overflow: hidden; padding: 4.5rem 0 5rem; text-align: center;
+    background:
+      radial-gradient(52rem 26rem at 78% -12%, rgba(34,211,238,.14), transparent),
+      radial-gradient(46rem 24rem at 12% 6%, rgba(47,90,150,.12), transparent); }
+  .badge { display: inline-flex; align-items: center; gap: .5rem; border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: .3rem .85rem; font-size: .78rem; font-weight: 600; color: var(--muted); }
+  .badge i { width: .5rem; height: .5rem; border-radius: 999px; background: #10b981; }
+  h1 { margin: 1.4rem auto 0; max-width: 46rem; font-size: clamp(2.1rem, 5.5vw, 3.6rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.12; }
+  .grad { background: linear-gradient(92deg, var(--brand), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { margin: 1.15rem auto 0; max-width: 34rem; color: var(--muted); font-size: 1.05rem; line-height: 1.7; }
+  .cta { margin-top: 2rem; display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; border-radius: .8rem; padding: .8rem 1.6rem; font-size: .92rem; font-weight: 700; transition: .15s; }
+  .btn-primary { background: linear-gradient(92deg, var(--brand), #3b82f6); color: #fff; box-shadow: 0 10px 24px rgba(47,90,150,.35); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+  .term { margin: 2.6rem auto 0; max-width: 38rem; text-align: left; background: var(--code-bg); border-radius: 1rem; box-shadow: var(--shadow); overflow: hidden; }
+  .term-bar { display: flex; gap: .4rem; padding: .7rem .9rem; border-bottom: 1px solid rgba(148,163,184,.15); }
+  .term-bar b { width: .65rem; height: .65rem; border-radius: 999px; display: block; }
+  .term pre { margin: 0; padding: 1rem 1.1rem 1.2rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: .8rem; line-height: 1.7; color: #dbe4f3; }
+  .g { color: #34d399; } .y { color: #fbbf24; } .b { color: #7dd3fc; }
+  .strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-soft); }
+  .strip .wrap { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4rem; padding: 2.2rem 1.25rem; }
+  .strip b { font-size: 1.45rem; color: var(--brand); display: block; font-weight: 800; }
+  html.dark .strip b { color: var(--accent); }
+  .strip span { color: var(--muted); font-size: .85rem; }
+  section.block { padding: 4.2rem 0; }
+  h2 { text-align: center; font-size: 1.9rem; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+  .lead { text-align: center; color: var(--muted); max-width: 30rem; margin: .8rem auto 0; line-height: 1.65; }
+  .cards { margin-top: 2.4rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); }
+  .card { border: 1px solid var(--border); background: var(--card); border-radius: 1.1rem; padding: 1.3rem; transition: .15s; }
+  .card:hover { border-color: var(--brand); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .card h3 { margin: 0; font-size: .85rem; color: var(--muted); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .7rem; }
+  .chip { font-family: 'JetBrains Mono', monospace; font-size: .72rem; background: rgba(47,90,150,.1); color: var(--brand); border-radius: .45rem; padding: .28rem .55rem; }
+  html.dark .chip { background: rgba(34,211,238,.12); color: var(--accent); }
+  .card p { margin: .8rem 0 0; font-size: .85rem; color: var(--muted); line-height: 1.6; }
+  .steps { margin-top: 2.4rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); counter-reset: step; }
+  .step { border: 1px solid var(--border); background: var(--card); border-radius: 1.1rem; padding: 1.3rem; }
+  .step::before { counter-increment: step; content: counter(step); display: inline-flex; width: 1.9rem; height: 1.9rem; align-items: center; justify-content: center; border-radius: 999px; background: linear-gradient(92deg, var(--brand), #3b82f6); color: #fff; font-weight: 800; font-size: .85rem; }
+  .step h3 { margin: .8rem 0 0; font-size: 1rem; }
+  .step p { margin: .5rem 0 0; font-size: .85rem; color: var(--muted); line-height: 1.6; }
+  .cta-panel { border-radius: 1.4rem; background: linear-gradient(120deg, var(--brand), var(--brand-strong)); padding: 3rem 1.5rem; text-align: center; color: #fff; box-shadow: var(--shadow); }
+  .cta-panel h2 { color: #fff; }
+  .cta-panel p { color: #c7d7ee; max-width: 26rem; margin: .8rem auto 0; line-height: 1.65; }
+  .cta-panel .btn-primary { background: #fff; color: var(--brand-strong); box-shadow: none; }
+  .cta-panel .btn-ghost { border-color: rgba(255,255,255,.4); background: transparent; color: #fff; }
+  code.inl { font-family: 'JetBrains Mono', monospace; font-size: .82em; background: rgba(47,90,150,.1); padding: .1rem .35rem; border-radius: .35rem; }
+  @media (min-width: 640px) { .strip .wrap { grid-template-columns: repeat(4, 1fr); } }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <span class="badge"><i></i>OpenAI / Anthropic 双协议兼容 · 流式 · 工具调用</span>
+      <h1>一个 Key，直连<br /><span class="grad">全球顶级 AI 模型</span></h1>
+      <p class="sub">GPT、Claude、Gemini 等模型统一接入。改一行 <code class="inl">base_url</code> 即可迁移，无需海外信用卡，按量计费、余额永久有效。</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="/console" target="_top">免费获取 API Key</a>
+        <a class="btn btn-ghost" href="/console/token" target="_top">登录控制台</a>
+      </div>
+      <div class="term">
+        <div class="term-bar"><b style="background:#f87171"></b><b style="background:#fbbf24"></b><b style="background:#34d399"></b></div>
+        <pre><span class="g">$</span> curl https://api.aicdks.com/v1/chat/completions \
+  -H <span class="y">"Authorization: Bearer $AICDKS_API_KEY"</span> \
+  -d <span class="b">'{"model":"auto","messages":[{"role":"user","content":"你好"}]}'</span></pre>
+      </div>
+    </div>
+  </header>
+
+  <div class="strip">
+    <div class="wrap">
+      <div><b>100%</b><span>OpenAI 接口兼容</span></div>
+      <div><b>SSE</b><span>全链路流式输出</span></div>
+      <div><b>Tools</b><span>函数/工具调用透传</span></div>
+      <div><b>auto</b><span>智能路由择优模型</span></div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="wrap">
+      <h2>支持的模型</h2>
+      <p class="lead">持续更新，完整清单以控制台与 <code class="inl">/v1/models</code> 实时返回为准。</p>
+      <div class="cards">
+        <div class="card"><h3>智能路由</h3><div class="chips"><span class="chip">auto</span><span class="chip">auto-fast</span><span class="chip">auto-strong</span></div><p>网关按可用性与性价比自动择优，实际模型经 X-Router-Model 头返回。</p></div>
+        <div class="card"><h3>Claude 系列</h3><div class="chips"><span class="chip">claude-sonnet-4.5</span><span class="chip">claude-haiku-4.5</span></div><p>支持 Anthropic 原生 /v1/messages，Claude Code 直接可用。</p></div>
+        <div class="card"><h3>Gemini 系列</h3><div class="chips"><span class="chip">gemini-3-pro</span><span class="chip">gemini-3-flash</span></div><p>多模态输入，长上下文任务的高性价比选择。</p></div>
+        <div class="card"><h3>GPT / 编码专精</h3><div class="chips"><span class="chip">gpt-5.x</span><span class="chip">swe-1.7</span></div><p>通用对话与软件工程任务，Codex CLI（/v1/responses）已适配。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <h2>三步接入</h2>
+      <p class="lead">与 OpenAI SDK 完全兼容，五分钟跑通第一个请求。</p>
+      <div class="steps">
+        <div class="step"><h3>注册并创建 Key</h3><p>进入控制台注册账号，注册即送免费体验额度，在「令牌」页创建 API Key。</p></div>
+        <div class="step"><h3>替换 base URL</h3><p>SDK 中把 base_url 改为 <code class="inl">https://api.aicdks.com/v1</code>，Key 换成刚创建的。</p></div>
+        <div class="step"><h3>发起调用</h3><p>模型名填 <code class="inl">auto</code> 或具体模型，流式、工具调用与官方语义一致。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="cta-panel">
+        <h2>现在就把你的应用接上来</h2>
+        <p>注册即送免费体验额度，一行代码切换。余额永久有效，按实际用量计费。</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="/console" target="_top">免费开始</a>
+          <a class="btn btn-ghost" href="https://aicdks.com" target="_top">AICDKS 商店</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    window.addEventListener('message', function (e) {
+      var mode = e && e.data && e.data.themeMode
+      if (mode === 'dark') document.documentElement.classList.add('dark')
+      else if (mode === 'light') document.documentElement.classList.remove('dark')
+    })
+  </script>
+</body>
+</html>
