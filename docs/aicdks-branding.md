@@ -10,18 +10,19 @@ Project Governance）。
 | 文件 | 用途 |
 |---|---|
 | `home.html` | 品牌化首页（自包含、响应式、跟随站点深浅色主题），供 `HomePageContent` 引用 |
-| `v2/{orbit,aurora,stack,circuit}-mark.svg` | 四套候选 logo 图标（Logo 选项 / favicon） |
-| `v2/*-logo-{light,dark}.svg` | 对应深浅色横版 lockup |
-| `aicdks-mark.svg` 等 | v1 旧方案，保留备选 |
+| `orbit-mark.svg` | 正式 logo 图标（Orbit Hex，老板已定稿；Logo 选项 / favicon） |
+| `orbit-logo-{light,dark}.svg` | 深浅色横版 lockup（home.html 引用） |
+| `favicon.svg` | favicon |
+| `apple-touch-icon.png` | 180×180 iOS 图标（深底） |
 
-品牌源文件与 PNG 渲染稿在 `wookat/llm-relay` 仓库 `site/brand/`（v1）与 `site/brand/v2/`（v2 四方案）。
+品牌源文件、PNG 渲染稿与落选方案归档在 `wookat/llm-relay` 仓库 `site/brand/`。
 
 ## 上线时的运行时选项（管理台 → 系统设置 → 通用）
 
 | 选项 | 值 |
 |---|---|
 | 系统名称（SystemName） | `AICDKS API` |
-| Logo | `/branding/v2/<老板选定方案>-mark.svg`（favicon 与页面标题随之自动应用） |
+| Logo | `/branding/orbit-mark.svg`（favicon 与页面标题随之自动应用） |
 | 首页内容（HomePageContent） | `/branding/home.html`（同源 URL，前端以 iframe 呈现并自动同步深浅色主题） |
 | 页脚（Footer） | `<a href="https://api.aicdks.com">AICDKS API</a> · <a href="https://aicdks.com">AI CDK 商店</a>` |
 

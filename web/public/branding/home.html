@@ -68,11 +68,20 @@
   .cta-panel .btn-ghost { border-color: rgba(255,255,255,.4); background: transparent; color: #fff; }
   code.inl { font-family: 'JetBrains Mono', monospace; font-size: .82em; background: rgba(47,90,150,.1); padding: .1rem .35rem; border-radius: .35rem; }
   @media (min-width: 640px) { .strip .wrap { grid-template-columns: repeat(4, 1fr); } }
+  .brandbar { display: flex; justify-content: center; padding-top: 2.2rem; }
+  .brandbar img { height: 3rem; }
+  .logo-dark { display: none; }
+  html.dark .logo-light { display: none; }
+  html.dark .logo-dark { display: block; }
 </style>
 </head>
 <body>
-  <header class="hero">
-    <div class="wrap">
+  <header class="hero" style="padding-top:0">
+    <div class="brandbar">
+      <img class="logo-light" src="orbit-logo-light.svg" alt="AICDKS API" />
+      <img class="logo-dark" src="orbit-logo-dark.svg" alt="AICDKS API" />
+    </div>
+    <div class="wrap" style="padding-top:2.6rem">
       <span class="badge"><i></i>OpenAI / Anthropic 双协议兼容 · 流式 · 工具调用</span>
       <h1>一个 Key，直连<br /><span class="grad">全球顶级 AI 模型</span></h1>
       <p class="sub">GPT、Claude、Gemini 等模型统一接入。改一行 <code class="inl">base_url</code> 即可迁移，无需海外信用卡，按量计费、余额永久有效。</p>
@@ -137,6 +146,9 @@
   </section>
 
   <script>
+    if (new URLSearchParams(location.search).get('theme') === 'dark') {
+      document.documentElement.classList.add('dark')
+    }
     window.addEventListener('message', function (e) {
       var mode = e && e.data && e.data.themeMode
       if (mode === 'dark') document.documentElement.classList.add('dark')
