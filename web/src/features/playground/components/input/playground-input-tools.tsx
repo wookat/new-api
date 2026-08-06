@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 import {
   PromptInputButton,
   PromptInputTools,
+  usePromptInputAttachments,
 } from '@/components/ai-elements/prompt-input'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
@@ -40,7 +41,9 @@ import {
 
 import {
   ATTACHMENT_ACTIONS,
-  getAttachmentActionNotice,
+  type AttachmentActionType,
+  captureScreenshotFile,
+  getAttachmentPickerConfig,
   getSearchActionNotice,
 } from '../../lib'
 import type { ParameterEnabled, PlaygroundConfig } from '../../types'
@@ -73,12 +76,33 @@ export function PlaygroundInputTools({
 }: PlaygroundInputToolsProps) {
   const { t } = useTranslation()
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const attachments = usePromptInputAttachments()
 
-  const handleFileAction = (action: string) => {
-    const notice = getAttachmentActionNotice(action)
-    toast.info(t(notice.title), {
-      description: notice.description,
-    })
+  const handleFileAction = async (action: AttachmentActionType) => {
+    if (action === 'take-screenshot') {
+      try {
+        const screenshot = await captureScreenshotFile()
+        attachments.add([screenshot])
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'NotAllowedError') {
+          return
+        }
+        toast.error(t('Screen capture is not supported in this browser'))
+      }
+      return
+    }
+
+    const picker = getAttachmentPickerConfig(action)
+    const input = attachments.fileInputRef.current
+    if (!picker || !input) return
+
+    input.accept = picker.accept
+    if (picker.capture) {
+      input.setAttribute('capture', picker.capture)
+    } else {
+      input.removeAttribute('capture')
+    }
+    attachments.openFileDialog()
   }
 
   const handleSearchAction = () => {
@@ -120,7 +144,7 @@ export function PlaygroundInputTools({
               {ATTACHMENT_ACTIONS.map(({ action, icon: Icon, label }) => (
                 <DropdownMenuItem
                   key={action}
-                  onClick={() => handleFileAction(action)}
+                  onClick={() => void handleFileAction(action)}
                 >
                   <Icon className='mr-2' size={16} />
                   {t(label)}

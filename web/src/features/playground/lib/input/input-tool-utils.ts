@@ -25,7 +25,7 @@ import {
 } from 'lucide-react'
 
 type AttachmentAction = {
-  action: string
+  action: AttachmentActionType
   icon: LucideIcon
   label: string
 }
@@ -33,6 +33,17 @@ type AttachmentAction = {
 type InputToolNotice = {
   description?: string
   title: string
+}
+
+export type AttachmentActionType =
+  | 'upload-file'
+  | 'upload-photo'
+  | 'take-screenshot'
+  | 'take-photo'
+
+type AttachmentPickerConfig = {
+  accept: string
+  capture?: 'environment' | 'user'
 }
 
 export const ATTACHMENT_ACTIONS = [
@@ -46,10 +57,66 @@ export const ATTACHMENT_ACTIONS = [
   { action: 'take-photo', icon: CameraIcon, label: 'Take photo' },
 ] satisfies AttachmentAction[]
 
-export function getAttachmentActionNotice(action: string): InputToolNotice {
-  return {
-    description: action,
-    title: 'Feature in development',
+export function getAttachmentPickerConfig(
+  action: AttachmentActionType
+): AttachmentPickerConfig | null {
+  switch (action) {
+    case 'upload-file':
+      return { accept: '' }
+    case 'upload-photo':
+      return { accept: 'image/*' }
+    case 'take-photo':
+      return { accept: 'image/*', capture: 'environment' }
+    default:
+      return null
+  }
+}
+
+/**
+ * Capture a screenshot of a user-selected screen/window via the
+ * Screen Capture API and return it as a PNG file.
+ */
+export async function captureScreenshotFile(): Promise<File> {
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    throw new Error('screen-capture-unsupported')
+  }
+
+  const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+  const track = stream.getVideoTracks()[0]
+
+  try {
+    const video = document.createElement('video')
+    video.srcObject = stream
+    video.muted = true
+    await video.play()
+
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('screen-capture-unsupported')
+    }
+    context.drawImage(video, 0, 0)
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) {
+          resolve(result)
+        } else {
+          reject(new Error('screen-capture-failed'))
+        }
+      }, 'image/png')
+    })
+
+    return new File([blob], `screenshot-${Date.now()}.png`, {
+      type: 'image/png',
+    })
+  } finally {
+    track?.stop()
+    for (const streamTrack of stream.getTracks()) {
+      streamTrack.stop()
+    }
   }
 }
 
