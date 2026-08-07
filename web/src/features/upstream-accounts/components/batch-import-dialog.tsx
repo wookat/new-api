@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { Upload } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -35,6 +36,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import { createUpstreamAccountsBatch } from '../api'
 import { parseImportRows } from '../lib/parse-import'
+import { normalizeSeparators, readImportFiles } from '../lib/read-import-files'
 import type { UpstreamAccountBatchResult } from '../types'
 
 type BatchImportDialogProps = {
@@ -48,13 +50,36 @@ export function BatchImportDialog(props: BatchImportDialogProps) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [result, setResult] = useState<UpstreamAccountBatchResult | null>(null)
+  const [dragActive, setDragActive] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!props.open) {
       setText('')
       setResult(null)
+      setDragActive(false)
     }
   }, [props.open])
+
+  const appendFiles = async (files: File[]) => {
+    if (files.length === 0) return
+    const outcome = await readImportFiles(files)
+    if (outcome.text) {
+      const normalized = normalizeSeparators(outcome.text)
+      setText((prev) =>
+        prev.trim() ? `${prev.trimEnd()}\n${normalized}` : normalized
+      )
+      setResult(null)
+    }
+    if (outcome.accepted.length > 0) {
+      toast.success(
+        t('Loaded {{count}} file(s)', { count: outcome.accepted.length })
+      )
+    }
+    for (const skip of outcome.skipped) {
+      toast.error(`${skip.name}: ${t(skip.reason)}`)
+    }
+  }
 
   const parsed = parseImportRows(text)
 
@@ -101,6 +126,53 @@ export function BatchImportDialog(props: BatchImportDialogProps) {
             if (canSubmit) mutation.mutate()
           }}
         >
+          <div
+            className={
+              dragActive
+                ? 'border-primary bg-primary/5 flex flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed p-4 text-center text-xs'
+                : 'border-muted-foreground/25 flex flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed p-4 text-center text-xs'
+            }
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDragActive(true)
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault()
+              setDragActive(false)
+            }}
+            onDrop={(e) => {
+              e.preventDefault()
+              setDragActive(false)
+              void appendFiles([...e.dataTransfer.files])
+            }}
+          >
+            <Upload
+              className='text-muted-foreground size-5'
+              aria-hidden='true'
+            />
+            <p className='text-muted-foreground'>
+              {t('Drag and drop a .txt/.csv token file here, or')}{' '}
+              <button
+                type='button'
+                className='text-primary underline'
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {t('browse')}
+              </button>
+            </p>
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept='.txt,.csv,.tsv,text/plain,text/csv'
+              multiple
+              className='hidden'
+              onChange={(e) => {
+                void appendFiles([...(e.target.files ?? [])])
+                e.target.value = ''
+              }}
+            />
+          </div>
+
           <div className='space-y-2'>
             <Label htmlFor='batch-text'>{t('Accounts')}</Label>
             <Textarea
