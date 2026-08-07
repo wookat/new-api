@@ -233,35 +233,35 @@ export function UpstreamAccounts() {
             </Badge>
           )}
           {renderContent()}
+
+          <AccountFormDialog
+            open={formOpen}
+            pool={selectedPool}
+            account={editing}
+            onOpenChange={(open) => {
+              setFormOpen(open)
+              if (!open) setEditing(null)
+            }}
+            onSaved={() => void invalidateAccounts()}
+          />
+
+          <ConfirmDialog
+            open={Boolean(deleting)}
+            onOpenChange={(open) => {
+              if (!open) setDeleting(null)
+            }}
+            title={t('Delete account')}
+            desc={t(
+              'This removes the account from the rotation pool. This action cannot be undone.'
+            )}
+            destructive
+            isLoading={deleteMutation.isPending}
+            handleConfirm={() => {
+              if (deleting) deleteMutation.mutate(deleting)
+            }}
+          />
         </div>
       </SectionPageLayout.Content>
-
-      <AccountFormDialog
-        open={formOpen}
-        pool={selectedPool}
-        account={editing}
-        onOpenChange={(open) => {
-          setFormOpen(open)
-          if (!open) setEditing(null)
-        }}
-        onSaved={() => void invalidateAccounts()}
-      />
-
-      <ConfirmDialog
-        open={Boolean(deleting)}
-        onOpenChange={(open) => {
-          if (!open) setDeleting(null)
-        }}
-        title={t('Delete account')}
-        desc={t(
-          'This removes the account from the rotation pool. This action cannot be undone.'
-        )}
-        destructive
-        isLoading={deleteMutation.isPending}
-        handleConfirm={() => {
-          if (deleting) deleteMutation.mutate(deleting)
-        }}
-      />
     </SectionPageLayout>
   )
 }
