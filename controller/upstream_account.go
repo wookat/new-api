@@ -229,3 +229,19 @@ func DeleteUpstreamAccount(c *gin.Context) {
 	recordUpstreamAudit(c, pool, "删除账号 "+id)
 	proxyUpstreamAdmin(c, pool, http.MethodDelete, "/admin/accounts/"+url.PathEscape(id))
 }
+
+// ProbeUpstreamAccount verifies one account's credential now via the bridge's
+// zero-cost status probe, so an operator can confirm a freshly added credential
+// (and its proxy route) without waiting for real traffic.
+func ProbeUpstreamAccount(c *gin.Context) {
+	pool, ok := resolveUpstreamPool(c)
+	if !ok {
+		return
+	}
+	id, ok := upstreamAccountID(c)
+	if !ok {
+		return
+	}
+	recordUpstreamAudit(c, pool, "探活账号 "+id)
+	proxyUpstreamAdmin(c, pool, http.MethodPost, "/admin/accounts/"+url.PathEscape(id)+"/probe")
+}

@@ -152,6 +152,55 @@ func TestProxyUpstreamAdminMapsBridgeFailureToApiError(t *testing.T) {
 	assert.NotContains(t, body, "wrong-key")
 }
 
+func TestProbeUpstreamAccountForwardsToBridgeProbePath(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	service.InitHttpClient()
+
+	var gotMethod, gotPath, gotAdminKey string
+	bridge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		gotAdminKey = r.Header.Get("x-admin-key")
+		w.Header().Set("content-type", "application/json")
+		_, _ = w.Write([]byte(`{"verification":"verified","reachable":true,"plan":"pro"}`))
+	}))
+	defer bridge.Close()
+
+	resetUpstreamPools(t, upstreamAccountPool{Name: "devin-native", BaseURL: bridge.URL, AdminKey: "admin-key-1"})
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/upstream-account/pools/devin-native/accounts/acc1/probe", nil)
+	c.Params = gin.Params{{Key: "pool", Value: "devin-native"}, {Key: "id", Value: "acc1"}}
+
+	ProbeUpstreamAccount(c)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, http.MethodPost, gotMethod)
+	assert.Equal(t, "/admin/accounts/acc1/probe", gotPath)
+	assert.Equal(t, "admin-key-1", gotAdminKey)
+	body := recorder.Body.String()
+	assert.Contains(t, body, "verified")
+	assert.NotContains(t, body, "admin-key-1")
+}
+
+func TestUpstreamAccountRoutesRejectPathTraversalIds(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetUpstreamPools(t, upstreamAccountPool{Name: "devin-native", BaseURL: "http://adapter:3004", AdminKey: "k"})
+
+	for _, id := range []string{"../secret", "a/b", "", ".."} {
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Request = httptest.NewRequest(http.MethodPost, "/api/upstream-account/pools/devin-native/accounts/x/probe", nil)
+		c.Params = gin.Params{{Key: "pool", Value: "devin-native"}, {Key: "id", Value: id}}
+
+		ProbeUpstreamAccount(c)
+
+		body := recorder.Body.String()
+		assert.Contains(t, body, "invalid account id", "id %q should be rejected", id)
+	}
+}
+
 func TestProxyUpstreamAdminReportsUnreachableBridge(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	service.InitHttpClient()
