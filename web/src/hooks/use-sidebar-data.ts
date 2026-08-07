@@ -23,6 +23,7 @@ import {
   FileText,
   FlaskConical,
   Key,
+  KeyRound,
   LayoutDashboard,
   ListTodo,
   MessageSquare,
@@ -143,6 +144,12 @@ export function useSidebarData(): SidebarData {
             title: t('Subscriptions'),
             url: '/subscriptions',
             icon: CreditCard,
+          },
+          {
+            title: t('Upstream Accounts'),
+            url: '/upstream-accounts',
+            icon: KeyRound,
+            requiredRole: ROLE.SUPER_ADMIN,
           },
           {
             title: t('System Info'),
