@@ -1,0 +1,29 @@
+name: auto-merge
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+  check_suite:
+    types: [completed]
+  status: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: pascalgn/automerge-action@7961b8b5eec56cc088c140b56d864285eabd3f67 # v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
+          MERGE_LABELS: ''
+          MERGE_FILTER_AUTHOR: devin-ai-integration[bot]
+          MERGE_REQUIRED_APPROVALS: '0'
+          MERGE_DELETE_BRANCH: 'true'
+          MERGE_RETRIES: '30'
+          MERGE_RETRY_SLEEP: '60000'
+          UPDATE_LABELS: ''
