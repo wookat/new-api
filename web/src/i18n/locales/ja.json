@@ -5292,5 +5292,7 @@
   },
   "One API Key for every model on the platform": "One API Key for every model on the platform",
   "Claude, Gemini, GLM and more": "Claude, Gemini, GLM and more",
-  "An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.": "An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit."
+  "An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.": "An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.",
+  "Claude, Gemini, GPT and more": "Claude, Gemini, GPT and more",
+  "An OpenAI-compatible gateway that aggregates Claude, Gemini, GPT, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.": "An OpenAI-compatible gateway that aggregates Claude, Gemini, GPT, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit."
 }
