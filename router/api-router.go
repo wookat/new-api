@@ -215,6 +215,19 @@ func SetApiRouter(router *gin.Engine) {
 			customOAuthRoute.PUT("/:id", controller.UpdateCustomOAuthProvider)
 			customOAuthRoute.DELETE("/:id", controller.DeleteCustomOAuthProvider)
 		}
+		// Upstream subscription account pool management (root only). new-api
+		// proxies to each bridge's internal admin API; the bridge admin key is
+		// a server-side secret and never reaches the browser.
+		upstreamAccountRoute := apiRouter.Group("/upstream-account")
+		upstreamAccountRoute.Use(middleware.RootAuth())
+		{
+			upstreamAccountRoute.GET("/pools", controller.GetUpstreamAccountPools)
+			upstreamAccountRoute.GET("/pools/:pool/accounts", controller.ListUpstreamAccounts)
+			upstreamAccountRoute.GET("/pools/:pool/health", controller.GetUpstreamAccountsHealth)
+			upstreamAccountRoute.POST("/pools/:pool/accounts", controller.CreateUpstreamAccount)
+			upstreamAccountRoute.PATCH("/pools/:pool/accounts/:id", controller.UpdateUpstreamAccount)
+			upstreamAccountRoute.DELETE("/pools/:pool/accounts/:id", controller.DeleteUpstreamAccount)
+		}
 		performanceRoute := apiRouter.Group("/performance")
 		performanceRoute.Use(middleware.RootAuth())
 		{
