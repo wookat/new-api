@@ -121,7 +121,7 @@ export function Hero(props: HeroProps) {
             {t('One key, every model:')}
             <br />
             <span className='bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent'>
-              {t('Claude, Gemini, GLM and more')}
+              {t('Claude, Gemini, GPT and more')}
             </span>
           </h1>
           <p
@@ -129,7 +129,7 @@ export function Hero(props: HeroProps) {
             style={{ animationDelay: '120ms' }}
           >
             {t(
-              'An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.'
+              'An OpenAI-compatible gateway that aggregates Claude, Gemini, GPT, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.'
             )}
           </p>
 

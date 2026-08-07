@@ -5292,5 +5292,7 @@
   },
   "One API Key for every model on the platform": "一个 API Key，畅用全站模型",
   "Claude, Gemini, GLM and more": "Claude、Gemini、GLM 等主流模型",
-  "An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.": "一个 OpenAI 兼容网关，用同一个 Key 聚合 Claude、Gemini、GLM、Kimi 与 SWE。流式输出、工具调用、图片与 PDF 输入开箱即用，按 token 实际用量计费，每次调用都可核对。"
+  "An OpenAI-compatible gateway that aggregates Claude, Gemini, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.": "一个 OpenAI 兼容网关，用同一个 Key 聚合 Claude、Gemini、GLM、Kimi 与 SWE。流式输出、工具调用、图片与 PDF 输入开箱即用，按 token 实际用量计费，每次调用都可核对。",
+  "Claude, Gemini, GPT and more": "Claude、Gemini、GPT 等主流模型",
+  "An OpenAI-compatible gateway that aggregates Claude, Gemini, GPT, GLM, Kimi and SWE behind a single key. Streaming, tool calling and image/PDF input work out of the box, with per-token billing and usage you can audit.": "一个 OpenAI 兼容网关，用同一个 Key 聚合 Claude、Gemini、GPT、GLM、Kimi 与 SWE。流式输出、工具调用、图片与 PDF 输入开箱即用，按 token 实际用量计费，每次调用都可核对。"
 }

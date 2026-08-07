@@ -98,7 +98,7 @@ export function Stats(_props: StatsProps) {
   const { t } = useTranslation()
 
   const stats: StatItem[] = [
-    { end: 38, suffix: '', label: t('models ready to call') },
+    { end: 33, suffix: '', label: t('models ready to call') },
     { end: 6, suffix: '', label: t('model vendors aggregated') },
     { end: 100, suffix: '%', label: t('OpenAI protocol compatible') },
     { end: 60, suffix: '/min', label: t('default per-user rate limit') },
