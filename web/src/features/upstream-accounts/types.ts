@@ -26,14 +26,28 @@ export type UpstreamPool = {
   name: string
 }
 
-// Snapshot returned by the bridge's /admin/accounts. Tokens are never sent in
-// full: only the last 4 characters (token_tail) are exposed.
+// Whether the bridge has confirmed the credential reaches the upstream. A newly
+// added account is 'unverified' until a zero-cost probe (or real traffic)
+// proves it, so a typo'd credential never reads as healthy.
+export type UpstreamVerification = 'unverified' | 'verified' | 'invalid'
+
+// Snapshot returned by the bridge's /admin/accounts. Secrets are never sent in
+// full: only the token tail and the proxy host (no credentials) are exposed.
 export type UpstreamAccount = {
   id: string
   label: string
   enabled: boolean
   weight: number
   token_tail: string
+  // scheme://host:port only; proxy credentials are stripped server-side.
+  proxy: string
+  has_proxy: boolean
+  daily_limit: number
+  hourly_limit: number
+  day_used: number
+  hour_used: number
+  quota_exhausted: boolean
+  verification: UpstreamVerification
   healthy: boolean
   cooling_down: boolean
   cooldown_remaining_s: number
@@ -53,6 +67,9 @@ export type UpstreamAccountCreate = {
   label?: string
   weight?: number
   enabled?: boolean
+  proxy?: string
+  daily_limit?: number
+  hourly_limit?: number
 }
 
 export type UpstreamAccountUpdate = {
@@ -60,4 +77,37 @@ export type UpstreamAccountUpdate = {
   weight?: number
   label?: string
   token?: string
+  proxy?: string
+  daily_limit?: number
+  hourly_limit?: number
+}
+
+// One parsed row of a batch import, before it is sent to the bridge.
+export type UpstreamAccountImportRow = {
+  token: string
+  label?: string
+  weight?: number
+  proxy?: string
+  daily_limit?: number
+  hourly_limit?: number
+}
+
+export type UpstreamAccountBatchCreate = {
+  accounts: UpstreamAccountImportRow[]
+}
+
+// The bridge reports which rows it accepted and which it rejected, so a paste of
+// many credentials never fails as a whole because of one bad line.
+export type UpstreamAccountBatchResult = {
+  added: UpstreamAccount[]
+  errors: { index: number; error: string }[]
+}
+
+export type UpstreamAccountProbeResult = {
+  verification: UpstreamVerification
+  reachable: boolean
+  plan?: string
+  email?: string
+  account?: string
+  error?: string
 }

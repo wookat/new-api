@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, RefreshCw, ServerCog } from 'lucide-react'
+import { Plus, RefreshCw, ServerCog, Upload } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -41,10 +41,12 @@ import {
   deleteUpstreamAccount,
   getUpstreamAccounts,
   getUpstreamPools,
+  probeUpstreamAccount,
   updateUpstreamAccount,
 } from './api'
 import { AccountFormDialog } from './components/account-form-dialog'
 import { AccountsTable } from './components/accounts-table'
+import { BatchImportDialog } from './components/batch-import-dialog'
 import type { UpstreamAccount } from './types'
 
 export function UpstreamAccounts() {
@@ -53,6 +55,7 @@ export function UpstreamAccounts() {
 
   const [selectedPool, setSelectedPool] = useState<string>('')
   const [formOpen, setFormOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editing, setEditing] = useState<UpstreamAccount | null>(null)
   const [deleting, setDeleting] = useState<UpstreamAccount | null>(null)
 
@@ -97,6 +100,30 @@ export function UpstreamAccounts() {
         return
       }
       toast.success(t('Account updated'))
+      void invalidateAccounts()
+    },
+    onError: () => toast.error(t('Operation failed')),
+  })
+
+  const probeMutation = useMutation({
+    mutationFn: (account: UpstreamAccount) =>
+      probeUpstreamAccount(selectedPool, account.id),
+    onSuccess: (res) => {
+      if (!res.success || !res.data) {
+        toast.error(res.message || t('Operation failed'))
+        return
+      }
+      if (res.data.verification === 'verified') {
+        toast.success(
+          t('Credential verified ({{plan}})', {
+            plan: res.data.plan || t('unknown plan'),
+          })
+        )
+      } else if (res.data.verification === 'invalid') {
+        toast.error(t('Credential rejected by the upstream'))
+      } else {
+        toast.warning(t('Could not reach the upstream; still unverified'))
+      }
       void invalidateAccounts()
     },
     onError: () => toast.error(t('Operation failed')),
@@ -169,8 +196,12 @@ export function UpstreamAccounts() {
           setFormOpen(true)
         }}
         onDelete={(account) => setDeleting(account)}
+        onProbe={(account) => probeMutation.mutate(account)}
         togglingId={
           toggleMutation.isPending ? toggleMutation.variables?.id : undefined
+        }
+        probingId={
+          probeMutation.isPending ? probeMutation.variables?.id : undefined
         }
       />
     )
@@ -214,6 +245,14 @@ export function UpstreamAccounts() {
             />
           </Button>
           <Button
+            variant='outline'
+            onClick={() => setImportOpen(true)}
+            disabled={!selectedPool}
+          >
+            <Upload className='size-4' />
+            {t('Batch import')}
+          </Button>
+          <Button
             onClick={() => {
               setEditing(null)
               setFormOpen(true)
@@ -242,6 +281,13 @@ export function UpstreamAccounts() {
               setFormOpen(open)
               if (!open) setEditing(null)
             }}
+            onSaved={() => void invalidateAccounts()}
+          />
+
+          <BatchImportDialog
+            open={importOpen}
+            pool={selectedPool}
+            onOpenChange={setImportOpen}
             onSaved={() => void invalidateAccounts()}
           />
 

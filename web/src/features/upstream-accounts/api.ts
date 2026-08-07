@@ -20,7 +20,10 @@ import { api } from '@/lib/api'
 
 import type {
   ApiResponse,
+  UpstreamAccountBatchCreate,
+  UpstreamAccountBatchResult,
   UpstreamAccountCreate,
+  UpstreamAccountProbeResult,
   UpstreamAccountUpdate,
   UpstreamAccountsResponse,
   UpstreamPool,
@@ -63,12 +66,33 @@ export async function updateUpstreamAccount(
   return res.data
 }
 
+export async function createUpstreamAccountsBatch(
+  pool: string,
+  data: UpstreamAccountBatchCreate
+): Promise<ApiResponse<UpstreamAccountBatchResult>> {
+  const res = await api.post(
+    `/api/upstream-account/pools/${encodeURIComponent(pool)}/accounts`,
+    data
+  )
+  return res.data
+}
+
 export async function deleteUpstreamAccount(
   pool: string,
   id: string
 ): Promise<ApiResponse<unknown>> {
   const res = await api.delete(
     `/api/upstream-account/pools/${encodeURIComponent(pool)}/accounts/${encodeURIComponent(id)}`
+  )
+  return res.data
+}
+
+export async function probeUpstreamAccount(
+  pool: string,
+  id: string
+): Promise<ApiResponse<UpstreamAccountProbeResult>> {
+  const res = await api.post(
+    `/api/upstream-account/pools/${encodeURIComponent(pool)}/accounts/${encodeURIComponent(id)}/probe`
   )
   return res.data
 }

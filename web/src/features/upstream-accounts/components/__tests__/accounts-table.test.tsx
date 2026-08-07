@@ -63,14 +63,24 @@ await i18n.use(initReactI18next).init({
         Label: 'Label',
         Token: 'Token',
         Status: 'Status',
+        Verification: 'Verification',
+        Proxy: 'Proxy',
+        Quota: 'Quota',
         Weight: 'Weight',
         Enabled: 'Enabled',
         Actions: 'Actions',
         Healthy: 'Healthy',
         Unhealthy: 'Unhealthy',
         Disabled: 'Disabled',
+        'Quota exhausted': 'Quota exhausted',
+        Verified: 'Verified',
+        Unverified: 'Unverified',
+        'Invalid credential': 'Invalid credential',
+        Direct: 'Direct',
+        Unlimited: 'Unlimited',
         'Cooling down': 'Cooling down',
         'Success / Fail': 'Success / Fail',
+        Verify: 'Verify',
         Edit: 'Edit',
         Delete: 'Delete',
       },
@@ -90,6 +100,14 @@ function account(overrides: Partial<UpstreamAccount> = {}): UpstreamAccount {
     enabled: true,
     weight: 3,
     token_tail: '9f2c',
+    proxy: '',
+    has_proxy: false,
+    daily_limit: 0,
+    hourly_limit: 0,
+    day_used: 0,
+    hour_used: 0,
+    quota_exhausted: false,
+    verification: 'unverified',
     healthy: true,
     cooling_down: false,
     cooldown_remaining_s: 0,
@@ -108,6 +126,7 @@ async function renderTable(accounts: UpstreamAccount[]) {
   const root = createRoot(container)
   const toggled: UpstreamAccount[] = []
   const deleted: UpstreamAccount[] = []
+  const probed: UpstreamAccount[] = []
 
   await act(async () =>
     root.render(
@@ -117,6 +136,7 @@ async function renderTable(accounts: UpstreamAccount[]) {
           onToggle={(a) => toggled.push(a)}
           onEdit={() => {}}
           onDelete={(a) => deleted.push(a)}
+          onProbe={(a) => probed.push(a)}
         />
       </I18nextProvider>
     )
@@ -126,6 +146,7 @@ async function renderTable(accounts: UpstreamAccount[]) {
     container,
     toggled,
     deleted,
+    probed,
     cleanup: async () => {
       await act(async () => root.unmount())
       container.remove()
@@ -174,6 +195,75 @@ describe('upstream accounts table', () => {
     const text = view.container.textContent ?? ''
     assert.equal(text.includes('Disabled'), true)
     assert.equal(text.includes('Healthy'), false)
+
+    await view.cleanup()
+  })
+
+  test('shows a freshly added account as Unverified until it is probed', async () => {
+    const view = await renderTable([account({ verification: 'unverified' })])
+
+    const text = view.container.textContent ?? ''
+    assert.equal(text.includes('Unverified'), true)
+    assert.equal(
+      text.includes('Verified') && !text.includes('Unverified'),
+      false
+    )
+
+    await view.cleanup()
+  })
+
+  test('marks an account whose credential the upstream rejected as Invalid', async () => {
+    const view = await renderTable([account({ verification: 'invalid' })])
+
+    const text = view.container.textContent ?? ''
+    assert.equal(text.includes('Invalid credential'), true)
+
+    await view.cleanup()
+  })
+
+  test('shows the masked proxy host but never a proxy password', async () => {
+    const view = await renderTable([
+      account({ has_proxy: true, proxy: 'http://1.2.3.4:8080' }),
+    ])
+
+    const text = view.container.textContent ?? ''
+    assert.equal(text.includes('1.2.3.4:8080'), true)
+    assert.equal(text.includes('pass'), false)
+
+    await view.cleanup()
+  })
+
+  test('flags an account that has hit its quota so it is visibly out of rotation', async () => {
+    const view = await renderTable([
+      account({
+        quota_exhausted: true,
+        daily_limit: 100,
+        day_used: 100,
+      }),
+    ])
+
+    const text = view.container.textContent ?? ''
+    assert.equal(text.includes('Quota exhausted'), true)
+    assert.equal(text.includes('100/100'), true)
+
+    await view.cleanup()
+  })
+
+  test('reports the account back to the caller when its verify button is clicked', async () => {
+    const view = await renderTable([account({ id: 'acc-probe' })])
+
+    const buttons = [
+      ...view.container.querySelectorAll<HTMLElement>(
+        'button[aria-label="Verify"]'
+      ),
+    ]
+    assert.ok(buttons.length > 0)
+    await act(async () => {
+      buttons[0].click()
+    })
+
+    assert.equal(view.probed.length, 1)
+    assert.equal(view.probed[0].id, 'acc-probe')
 
     await view.cleanup()
   })

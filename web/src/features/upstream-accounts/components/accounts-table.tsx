@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, ShieldCheck, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
@@ -38,7 +38,9 @@ type AccountsTableProps = {
   onToggle: (account: UpstreamAccount) => void
   onEdit: (account: UpstreamAccount) => void
   onDelete: (account: UpstreamAccount) => void
+  onProbe: (account: UpstreamAccount) => void
   togglingId?: string
+  probingId?: string
 }
 
 function HealthBadge(props: { account: UpstreamAccount }) {
@@ -54,10 +56,36 @@ function HealthBadge(props: { account: UpstreamAccount }) {
       </Badge>
     )
   }
+  if (account.quota_exhausted) {
+    return <Badge variant='warning'>{t('Quota exhausted')}</Badge>
+  }
   if (account.healthy) {
     return <Badge variant='outline'>{t('Healthy')}</Badge>
   }
   return <Badge variant='destructive'>{t('Unhealthy')}</Badge>
+}
+
+function VerificationBadge(props: { account: UpstreamAccount }) {
+  const { t } = useTranslation()
+  const verification = props.account.verification
+  if (verification === 'verified') {
+    return <Badge variant='outline'>{t('Verified')}</Badge>
+  }
+  if (verification === 'invalid') {
+    return <Badge variant='destructive'>{t('Invalid credential')}</Badge>
+  }
+  return <Badge variant='secondary'>{t('Unverified')}</Badge>
+}
+
+function quotaText(account: UpstreamAccount): string | null {
+  const parts: string[] = []
+  if (account.daily_limit > 0) {
+    parts.push(`${account.day_used}/${account.daily_limit}/d`)
+  }
+  if (account.hourly_limit > 0) {
+    parts.push(`${account.hour_used}/${account.hourly_limit}/h`)
+  }
+  return parts.length > 0 ? parts.join(' · ') : null
 }
 
 export function AccountsTable(props: AccountsTableProps) {
@@ -73,7 +101,10 @@ export function AccountsTable(props: AccountsTableProps) {
               <TableHead>{t('Label')}</TableHead>
               <TableHead>{t('Token')}</TableHead>
               <TableHead>{t('Status')}</TableHead>
+              <TableHead>{t('Verification')}</TableHead>
+              <TableHead>{t('Proxy')}</TableHead>
               <TableHead className='text-right'>{t('Weight')}</TableHead>
+              <TableHead className='text-right'>{t('Quota')}</TableHead>
               <TableHead className='text-right'>
                 {t('Success / Fail')}
               </TableHead>
@@ -103,7 +134,16 @@ export function AccountsTable(props: AccountsTableProps) {
                     )}
                   </div>
                 </TableCell>
+                <TableCell>
+                  <VerificationBadge account={account} />
+                </TableCell>
+                <TableCell className='text-muted-foreground font-mono text-xs'>
+                  {account.has_proxy ? account.proxy : t('Direct')}
+                </TableCell>
                 <TableCell className='text-right'>{account.weight}</TableCell>
+                <TableCell className='text-muted-foreground text-right text-xs'>
+                  {quotaText(account) ?? t('Unlimited')}
+                </TableCell>
                 <TableCell className='text-right'>
                   <span className='text-emerald-600'>{account.ok_count}</span>
                   {' / '}
@@ -119,6 +159,15 @@ export function AccountsTable(props: AccountsTableProps) {
                 </TableCell>
                 <TableCell className='text-right'>
                   <div className='flex justify-end gap-1'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => props.onProbe(account)}
+                      disabled={props.probingId === account.id}
+                      aria-label={t('Verify')}
+                    >
+                      <ShieldCheck className='size-4' />
+                    </Button>
                     <Button
                       variant='ghost'
                       size='icon'
@@ -156,7 +205,10 @@ export function AccountsTable(props: AccountsTableProps) {
                   ****{account.token_tail}
                 </p>
               </div>
-              <HealthBadge account={account} />
+              <div className='flex flex-col items-end gap-1'>
+                <HealthBadge account={account} />
+                <VerificationBadge account={account} />
+              </div>
             </div>
             <div className='text-muted-foreground mt-3 grid grid-cols-2 gap-2 text-sm'>
               <span>
@@ -164,6 +216,12 @@ export function AccountsTable(props: AccountsTableProps) {
               </span>
               <span>
                 {t('Success / Fail')}: {account.ok_count} / {account.fail_count}
+              </span>
+              <span className='truncate'>
+                {t('Proxy')}: {account.has_proxy ? account.proxy : t('Direct')}
+              </span>
+              <span>
+                {t('Quota')}: {quotaText(account) ?? t('Unlimited')}
               </span>
             </div>
             {account.last_error && (
@@ -185,6 +243,15 @@ export function AccountsTable(props: AccountsTableProps) {
                 <span className='text-sm'>{t('Enabled')}</span>
               </div>
               <div className='flex gap-1'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => props.onProbe(account)}
+                  disabled={props.probingId === account.id}
+                  aria-label={t('Verify')}
+                >
+                  <ShieldCheck className='size-4' />
+                </Button>
                 <Button
                   variant='ghost'
                   size='icon'

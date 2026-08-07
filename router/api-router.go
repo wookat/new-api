@@ -227,6 +227,7 @@ func SetApiRouter(router *gin.Engine) {
 			upstreamAccountRoute.POST("/pools/:pool/accounts", controller.CreateUpstreamAccount)
 			upstreamAccountRoute.PATCH("/pools/:pool/accounts/:id", controller.UpdateUpstreamAccount)
 			upstreamAccountRoute.DELETE("/pools/:pool/accounts/:id", controller.DeleteUpstreamAccount)
+			upstreamAccountRoute.POST("/pools/:pool/accounts/:id/probe", controller.ProbeUpstreamAccount)
 		}
 		performanceRoute := apiRouter.Group("/performance")
 		performanceRoute.Use(middleware.RootAuth())

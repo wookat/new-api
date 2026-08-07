@@ -54,6 +54,9 @@ export function AccountFormDialog(props: AccountFormDialogProps) {
   const [weight, setWeight] = useState('1')
   const [token, setToken] = useState('')
   const [enabled, setEnabled] = useState(true)
+  const [proxy, setProxy] = useState('')
+  const [dailyLimit, setDailyLimit] = useState('0')
+  const [hourlyLimit, setHourlyLimit] = useState('0')
 
   useEffect(() => {
     if (!props.open) return
@@ -62,11 +65,19 @@ export function AccountFormDialog(props: AccountFormDialogProps) {
       setWeight(String(props.account.weight ?? 1))
       setEnabled(props.account.enabled)
       setToken('')
+      // The stored proxy is shown masked; leave the field blank so a save
+      // without retyping it keeps the existing proxy (credentials included).
+      setProxy('')
+      setDailyLimit(String(props.account.daily_limit ?? 0))
+      setHourlyLimit(String(props.account.hourly_limit ?? 0))
     } else {
       setLabel('')
       setWeight('1')
       setEnabled(true)
       setToken('')
+      setProxy('')
+      setDailyLimit('0')
+      setHourlyLimit('0')
     }
   }, [props.open, props.account])
 
@@ -75,12 +86,17 @@ export function AccountFormDialog(props: AccountFormDialogProps) {
       const weightNum = Number.parseInt(weight, 10)
       const normalizedWeight =
         Number.isFinite(weightNum) && weightNum > 0 ? weightNum : 1
+      const daily = Math.max(0, Number.parseInt(dailyLimit, 10) || 0)
+      const hourly = Math.max(0, Number.parseInt(hourlyLimit, 10) || 0)
       if (isEdit && props.account) {
         return updateUpstreamAccount(props.pool, props.account.id, {
           label,
           weight: normalizedWeight,
           enabled,
+          daily_limit: daily,
+          hourly_limit: hourly,
           ...(token.trim() ? { token: token.trim() } : {}),
+          ...(proxy.trim() ? { proxy: proxy.trim() } : {}),
         })
       }
       return createUpstreamAccount(props.pool, {
@@ -88,6 +104,9 @@ export function AccountFormDialog(props: AccountFormDialogProps) {
         label,
         weight: normalizedWeight,
         enabled,
+        daily_limit: daily,
+        hourly_limit: hourly,
+        ...(proxy.trim() ? { proxy: proxy.trim() } : {}),
       })
     },
     onSuccess: (res) => {
@@ -159,14 +178,64 @@ export function AccountFormDialog(props: AccountFormDialogProps) {
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='account-weight'>{t('Weight')}</Label>
+            <Label htmlFor='account-proxy'>
+              {isEdit ? t('Replace proxy (optional)') : t('Outbound proxy')}
+            </Label>
             <Input
-              id='account-weight'
-              type='number'
-              min={1}
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
+              id='account-proxy'
+              value={proxy}
+              onChange={(e) => setProxy(e.target.value)}
+              placeholder='http://user:pass@host:port'
+              autoComplete='off'
             />
+            <p className='text-muted-foreground text-xs'>
+              {isEdit && props.account?.has_proxy
+                ? t(
+                    'A proxy is set ({{proxy}}). Leave blank to keep it; the password is never shown.',
+                    { proxy: props.account.proxy }
+                  )
+                : t(
+                    'Route this account through its own egress IP. Supports http/https/socks5; the password is stored on the bridge only.'
+                  )}
+            </p>
+          </div>
+
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='account-weight'>{t('Weight')}</Label>
+              <Input
+                id='account-weight'
+                type='number'
+                min={1}
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='account-daily'>{t('Daily limit')}</Label>
+              <Input
+                id='account-daily'
+                type='number'
+                min={0}
+                value={dailyLimit}
+                onChange={(e) => setDailyLimit(e.target.value)}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='account-hourly'>{t('Hourly limit')}</Label>
+              <Input
+                id='account-hourly'
+                type='number'
+                min={0}
+                value={hourlyLimit}
+                onChange={(e) => setHourlyLimit(e.target.value)}
+              />
+            </div>
+            <div className='flex items-end'>
+              <p className='text-muted-foreground text-xs'>
+                {t('0 means unlimited.')}
+              </p>
+            </div>
           </div>
 
           <div className='flex items-center justify-between'>
