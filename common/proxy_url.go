@@ -8,6 +8,43 @@ import (
 	"strings"
 )
 
+// ProxyCredentialPlaceholder stands in for proxy credentials that must not leave the server.
+const ProxyCredentialPlaceholder = "***"
+
+// MaskProxyURL replaces any credentials embedded in a proxy URL with ProxyCredentialPlaceholder,
+// keeping scheme, host, and port intact so the endpoint stays recognizable in admin views.
+func MaskProxyURL(rawProxyURL string) string {
+	parsedURL, err := ParseProxyURLStrict(rawProxyURL)
+	if err != nil || parsedURL == nil || parsedURL.User == nil {
+		return rawProxyURL
+	}
+	// Built by hand rather than via url.URL.String(), which percent-escapes the placeholder
+	// and would not round-trip back through ProxyURLCredentialsAreMasked.
+	return fmt.Sprintf("%s://%s:%s@%s", parsedURL.Scheme, ProxyCredentialPlaceholder, ProxyCredentialPlaceholder, parsedURL.Host)
+}
+
+// ProxyURLCredentialsAreMasked reports whether a proxy URL carries the placeholder credentials,
+// which means the client echoed back a masked value instead of supplying real ones.
+func ProxyURLCredentialsAreMasked(rawProxyURL string) bool {
+	parsedURL, err := ParseProxyURLStrict(rawProxyURL)
+	if err != nil || parsedURL == nil || parsedURL.User == nil {
+		return false
+	}
+	password, _ := parsedURL.User.Password()
+	return parsedURL.User.Username() == ProxyCredentialPlaceholder && password == ProxyCredentialPlaceholder
+}
+
+// ProxyURLsShareEndpoint reports whether two proxy URLs point at the same scheme, host, and port,
+// ignoring credentials.
+func ProxyURLsShareEndpoint(leftProxyURL, rightProxyURL string) bool {
+	left, leftErr := ParseProxyURLStrict(leftProxyURL)
+	right, rightErr := ParseProxyURLStrict(rightProxyURL)
+	if leftErr != nil || rightErr != nil || left == nil || right == nil {
+		return false
+	}
+	return left.Scheme == right.Scheme && left.Host == right.Host
+}
+
 // ParseProxyURLStrict validates and normalizes a proxy URL for persistence.
 func ParseProxyURLStrict(rawProxyURL string) (*url.URL, error) {
 	parsedURL, _, err := parseProxyURL(rawProxyURL, false)

@@ -64,11 +64,34 @@ func parseStatusFilter(statusParam string) int {
 	}
 }
 
-func clearChannelInfo(channel *model.Channel) {
+// sanitizeChannelForResponse strips per-channel state and secrets that must not reach admin clients.
+// The proxy URL can embed credentials, so it is masked while keeping the endpoint visible.
+func sanitizeChannelForResponse(channel *model.Channel) {
 	if channel.ChannelInfo.IsMultiKey {
 		channel.ChannelInfo.MultiKeyDisabledReason = nil
 		channel.ChannelInfo.MultiKeyDisabledTime = nil
 	}
+	if channel.Setting == nil || *channel.Setting == "" {
+		return
+	}
+	// Deliberately not using GetSetting/SetSetting: GetSetting persists the channel when the
+	// stored setting is malformed, and channels in list responses are loaded without their key.
+	setting := dto.ChannelSettings{}
+	if err := common.Unmarshal([]byte(*channel.Setting), &setting); err != nil {
+		channel.Setting = nil
+		return
+	}
+	masked := common.MaskProxyURL(setting.Proxy)
+	if masked == setting.Proxy {
+		return
+	}
+	setting.Proxy = masked
+	settingBytes, err := common.Marshal(setting)
+	if err != nil {
+		channel.Setting = nil
+		return
+	}
+	channel.Setting = common.GetPointer[string](string(settingBytes))
 }
 
 func applyChannelStatusFilter(query *gorm.DB, statusFilter int) *gorm.DB {
@@ -166,7 +189,7 @@ func GetAllChannels(c *gin.Context) {
 	}
 
 	for _, datum := range channelData {
-		clearChannelInfo(datum)
+		sanitizeChannelForResponse(datum)
 	}
 
 	countQuery := buildChannelListQuery(groupFilter, statusFilter, -1)
@@ -379,7 +402,7 @@ func SearchChannels(c *gin.Context) {
 	pagedData := channelData[startIdx:endIdx]
 
 	for _, datum := range pagedData {
-		clearChannelInfo(datum)
+		sanitizeChannelForResponse(datum)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -406,7 +429,7 @@ func GetChannel(c *gin.Context) {
 		return
 	}
 	if channel != nil {
-		clearChannelInfo(channel)
+		sanitizeChannelForResponse(channel)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -984,6 +1007,21 @@ func UpdateChannel(c *gin.Context) {
 	originProxy := originChannel.GetSetting().Proxy
 	proxyChanged := false
 	if _, settingProvided := requestData["setting"]; settingProvided {
+		// The proxy credentials are masked in responses, so an unchanged edit round-trips the
+		// placeholder back. Restore the stored credentials, but only for the same endpoint —
+		// otherwise they would be handed to a proxy host the admin never authenticated against.
+		setting := channel.GetSetting()
+		if common.ProxyURLCredentialsAreMasked(setting.Proxy) {
+			if !common.ProxyURLsShareEndpoint(setting.Proxy, originProxy) {
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": "更换代理地址时必须重新填写代理凭据",
+				})
+				return
+			}
+			setting.Proxy = originProxy
+			channel.SetSetting(setting)
+		}
 		newProxy, _ := service.NormalizeProxyURL(channel.GetSetting().Proxy)
 		normalizedOriginProxy, originProxyErr := service.NormalizeProxyURL(originProxy)
 		proxyChanged = originProxyErr != nil || normalizedOriginProxy != newProxy
@@ -1115,7 +1153,7 @@ func UpdateChannel(c *gin.Context) {
 		"changed_fields": changedFields,
 	})
 	channel.Key = ""
-	clearChannelInfo(&channel.Channel)
+	sanitizeChannelForResponse(&channel.Channel)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
