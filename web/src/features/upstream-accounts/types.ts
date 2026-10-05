@@ -24,6 +24,10 @@ export type ApiResponse<T> = {
 
 export type UpstreamPool = {
   name: string
+  // Onboarding methods the bridge reports via /admin/capabilities
+  // (e.g. 'devin' = email+password sign-in). Absent on older bridges:
+  // the UI then offers token-paste only.
+  login_methods?: string[]
 }
 
 // Whether the bridge has confirmed the credential reaches the upstream. A newly
@@ -101,6 +105,27 @@ export type UpstreamAccountBatchCreate = {
 export type UpstreamAccountBatchResult = {
   added: UpstreamAccount[]
   errors: { index: number; error: string }[]
+}
+
+// Sign-in onboarding: the bridge replays the real Devin web login + CLI PKCE
+// handshake and pools the minted session credential. The password transits to
+// the bridge once and is never stored or shown again.
+export type UpstreamDevinLogin = {
+  email: string
+  password: string
+  label?: string
+  weight?: number
+  enabled?: boolean
+  proxy?: string
+  daily_limit?: number
+  hourly_limit?: number
+}
+
+export type UpstreamDevinLoginResult = {
+  account: UpstreamAccount
+  email?: string
+  plan?: string
+  verification?: UpstreamVerification
 }
 
 export type UpstreamAccountProbeResult = {

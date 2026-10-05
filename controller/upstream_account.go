@@ -2,12 +2,14 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -31,6 +33,10 @@ type upstreamAccountPool struct {
 // the admin key and the internal base URL, keeping only what the UI needs.
 type upstreamAccountPoolPublic struct {
 	Name string `json:"name"`
+	// Login methods the bridge reports via /admin/capabilities (e.g. "devin"
+	// for email+password onboarding). Empty when the bridge is unreachable or
+	// predates the endpoint; the UI then shows token-paste only.
+	LoginMethods []string `json:"login_methods"`
 }
 
 var (
@@ -90,9 +96,49 @@ func GetUpstreamAccountPools(c *gin.Context) {
 	loadUpstreamAccountPools()
 	pools := make([]upstreamAccountPoolPublic, 0, len(upstreamPoolOrder))
 	for _, name := range upstreamPoolOrder {
-		pools = append(pools, upstreamAccountPoolPublic{Name: name})
+		pool := upstreamPools[name]
+		pools = append(pools, upstreamAccountPoolPublic{
+			Name:         name,
+			LoginMethods: fetchUpstreamLoginMethods(c, pool),
+		})
 	}
 	common.ApiSuccess(c, pools)
+}
+
+// fetchUpstreamLoginMethods asks the bridge which login onboarding it supports.
+// A bridge that lacks the endpoint or is unreachable yields an empty list so
+// the page still loads; the capability check stays best-effort.
+func fetchUpstreamLoginMethods(c *gin.Context, pool upstreamAccountPool) []string {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pool.BaseURL+"/admin/capabilities", nil)
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("accept", "application/json")
+	if pool.AdminKey != "" {
+		req.Header.Set("x-admin-key", pool.AdminKey)
+	}
+	client := service.GetHttpClient()
+	if client == nil {
+		return nil
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	var payload struct {
+		LoginMethods []string `json:"login_methods"`
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil || common.Unmarshal(body, &payload) != nil {
+		return nil
+	}
+	return payload.LoginMethods
 }
 
 // proxyUpstreamAdmin forwards the current request to the bridge admin API,
@@ -228,6 +274,18 @@ func DeleteUpstreamAccount(c *gin.Context) {
 	}
 	recordUpstreamAudit(c, pool, "删除账号 "+id)
 	proxyUpstreamAdmin(c, pool, http.MethodDelete, "/admin/accounts/"+url.PathEscape(id))
+}
+
+// DevinLoginUpstreamAccount onboards a Devin account by email+password: the
+// bridge replays the real web login + CLI PKCE handshake server-side and pools
+// the minted credential, so an operator never handles a raw token.
+func DevinLoginUpstreamAccount(c *gin.Context) {
+	pool, ok := resolveUpstreamPool(c)
+	if !ok {
+		return
+	}
+	recordUpstreamAudit(c, pool, "Devin 账号登录添加")
+	proxyUpstreamAdmin(c, pool, http.MethodPost, "/admin/accounts/devin-login")
 }
 
 // ProbeUpstreamAccount verifies one account's credential now via the bridge's
