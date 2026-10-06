@@ -114,6 +114,7 @@ export type UpstreamDevinLogin = {
   email: string
   password: string
   label?: string
+  org?: string
   weight?: number
   enabled?: boolean
   proxy?: string

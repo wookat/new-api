@@ -81,6 +81,9 @@ await i18n.use(initReactI18next).init({
           'Sign in with the Devin account email and password. The bridge performs the real sign-in and pools the minted credential; the password is used once and never stored.',
         'Defaults to devin:email if left blank':
           'Defaults to devin:email if left blank',
+        'Organization (optional)': 'Organization (optional)',
+        'Org ID or display name. Leave blank to use the home org of the account; set it to mint a credential for a specific workspace seat.':
+          'Org ID or display name. Leave blank to use the home org of the account; set it to mint a credential for a specific workspace seat.',
         'Route this account through its own egress IP. Supports http/https/socks5; the password is stored on the bridge only.':
           'Route this account through its own egress IP. Supports http/https/socks5; the password is stored on the bridge only.',
         'Account added': 'Account added',
@@ -103,7 +106,7 @@ function setInputValue(input: Element, value: string) {
     'value'
   )?.set
   setter?.call(input, value)
-  input.dispatchEvent(new domWindow.Event('input', { bubbles: true }))
+  input.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
 async function renderDialog(props: {
@@ -225,15 +228,17 @@ describe('devin login dialog', () => {
       const email = document.querySelector('#devin-login-email')
       const password = document.querySelector('#devin-login-password')
       const label = document.querySelector('#devin-login-label')
+      const org = document.querySelector('#devin-login-org')
       const submit = document.querySelector<HTMLButtonElement>(
         'button[type="submit"]'
       )
-      assert.ok(email && password && label && submit)
+      assert.ok(email && password && label && org && submit)
 
       await act(async () => {
         setInputValue(email, 'user@example.com')
         setInputValue(password, 's3cret-pw')
         setInputValue(label, 'ops-secondary')
+        setInputValue(org, 'zalize Pro')
       })
       await act(async () => {
         submit.click()
@@ -250,6 +255,7 @@ describe('devin login dialog', () => {
         email: 'user@example.com',
         password: 's3cret-pw',
         label: 'ops-secondary',
+        org: 'zalize Pro',
         enabled: true,
         weight: 1,
         daily_limit: 0,

@@ -49,6 +49,7 @@ export function DevinLoginDialog(props: DevinLoginDialogProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [label, setLabel] = useState('')
+  const [org, setOrg] = useState('')
   const [weight, setWeight] = useState('1')
   const [enabled, setEnabled] = useState(true)
   const [proxy, setProxy] = useState('')
@@ -60,6 +61,7 @@ export function DevinLoginDialog(props: DevinLoginDialogProps) {
     setEmail('')
     setPassword('')
     setLabel('')
+    setOrg('')
     setWeight('1')
     setEnabled(true)
     setProxy('')
@@ -82,6 +84,7 @@ export function DevinLoginDialog(props: DevinLoginDialogProps) {
         daily_limit: daily,
         hourly_limit: hourly,
         ...(label.trim() ? { label: label.trim() } : {}),
+        ...(org.trim() ? { org: org.trim() } : {}),
         ...(proxy.trim() ? { proxy: proxy.trim() } : {}),
       })
     },
@@ -155,6 +158,24 @@ export function DevinLoginDialog(props: DevinLoginDialogProps) {
               onChange={(e) => setLabel(e.target.value)}
               placeholder={t('Defaults to devin:email if left blank')}
             />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='devin-login-org'>
+              {t('Organization (optional)')}
+            </Label>
+            <Input
+              id='devin-login-org'
+              value={org}
+              onChange={(e) => setOrg(e.target.value)}
+              placeholder='zalize Pro'
+              autoComplete='off'
+            />
+            <p className='text-muted-foreground text-xs'>
+              {t(
+                'Org ID or display name. Leave blank to use the home org of the account; set it to mint a credential for a specific workspace seat.'
+              )}
+            </p>
           </div>
 
           <div className='space-y-2'>
