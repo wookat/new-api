@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, RefreshCw, ServerCog, Upload } from 'lucide-react'
+import { LogIn, Plus, RefreshCw, ServerCog, Upload } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -47,6 +47,7 @@ import {
 import { AccountFormDialog } from './components/account-form-dialog'
 import { AccountsTable } from './components/accounts-table'
 import { BatchImportDialog } from './components/batch-import-dialog'
+import { DevinLoginDialog } from './components/devin-login-dialog'
 import type { UpstreamAccount } from './types'
 
 export function UpstreamAccounts() {
@@ -56,6 +57,7 @@ export function UpstreamAccounts() {
   const [selectedPool, setSelectedPool] = useState<string>('')
   const [formOpen, setFormOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
   const [editing, setEditing] = useState<UpstreamAccount | null>(null)
   const [deleting, setDeleting] = useState<UpstreamAccount | null>(null)
 
@@ -74,6 +76,10 @@ export function UpstreamAccounts() {
       setSelectedPool(pools[0].name)
     }
   }, [pools, selectedPool])
+
+  const selectedPoolInfo = pools.find((pool) => pool.name === selectedPool)
+  const supportsDevinLogin =
+    selectedPoolInfo?.login_methods?.includes('devin') ?? false
 
   const accountsQuery = useQuery({
     queryKey: ['upstream-account', 'accounts', selectedPool],
@@ -252,6 +258,16 @@ export function UpstreamAccounts() {
             <Upload className='size-4' />
             {t('Batch import')}
           </Button>
+          {supportsDevinLogin && (
+            <Button
+              variant='outline'
+              onClick={() => setLoginOpen(true)}
+              disabled={!selectedPool}
+            >
+              <LogIn className='size-4' />
+              {t('Devin sign-in')}
+            </Button>
+          )}
           <Button
             onClick={() => {
               setEditing(null)
@@ -288,6 +304,13 @@ export function UpstreamAccounts() {
             open={importOpen}
             pool={selectedPool}
             onOpenChange={setImportOpen}
+            onSaved={() => void invalidateAccounts()}
+          />
+
+          <DevinLoginDialog
+            open={loginOpen}
+            pool={selectedPool}
+            onOpenChange={setLoginOpen}
             onSaved={() => void invalidateAccounts()}
           />
 

@@ -26,6 +26,8 @@ import type {
   UpstreamAccountProbeResult,
   UpstreamAccountUpdate,
   UpstreamAccountsResponse,
+  UpstreamDevinLogin,
+  UpstreamDevinLoginResult,
   UpstreamPool,
 } from './types'
 
@@ -83,6 +85,17 @@ export async function deleteUpstreamAccount(
 ): Promise<ApiResponse<unknown>> {
   const res = await api.delete(
     `/api/upstream-account/pools/${encodeURIComponent(pool)}/accounts/${encodeURIComponent(id)}`
+  )
+  return res.data
+}
+
+export async function devinLoginUpstreamAccount(
+  pool: string,
+  data: UpstreamDevinLogin
+): Promise<ApiResponse<UpstreamDevinLoginResult>> {
+  const res = await api.post(
+    `/api/upstream-account/pools/${encodeURIComponent(pool)}/devin-login`,
+    data
   )
   return res.data
 }

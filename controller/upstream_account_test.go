@@ -224,3 +224,102 @@ func TestProxyUpstreamAdminReportsUnreachableBridge(t *testing.T) {
 	assert.Contains(t, body, "is unreachable")
 	assert.NotContains(t, body, "admin-key-1")
 }
+
+func TestGetUpstreamAccountPoolsMergesBridgeCapabilities(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	service.InitHttpClient()
+
+	var gotAdminKey string
+	bridge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/admin/capabilities", r.URL.Path)
+		gotAdminKey = r.Header.Get("x-admin-key")
+		w.Header().Set("content-type", "application/json")
+		_, _ = w.Write([]byte(`{"login_methods":["devin"]}`))
+	}))
+	defer bridge.Close()
+
+	resetUpstreamPools(t, upstreamAccountPool{Name: "devin-native", BaseURL: bridge.URL, AdminKey: "admin-key-1"})
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/upstream-account/pools", nil)
+
+	GetUpstreamAccountPools(c)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "admin-key-1", gotAdminKey)
+	body := recorder.Body.String()
+	assert.Contains(t, body, `"login_methods":["devin"]`)
+	assert.NotContains(t, body, "admin-key-1")
+}
+
+func TestGetUpstreamAccountPoolsToleratesBridgeWithoutCapabilities(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	service.InitHttpClient()
+
+	// A bridge that predates /admin/capabilities (404) must still list: the
+	// page renders with token-paste onboarding only.
+	bridge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer bridge.Close()
+
+	resetUpstreamPools(t, upstreamAccountPool{Name: "devin-native", BaseURL: bridge.URL, AdminKey: "k"})
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/upstream-account/pools", nil)
+
+	GetUpstreamAccountPools(c)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	body := recorder.Body.String()
+	assert.Contains(t, body, "devin-native")
+	assert.Contains(t, body, `"login_methods":null`)
+}
+
+func TestDevinLoginUpstreamAccountForwardsToBridgeLoginPath(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	service.InitHttpClient()
+
+	var gotMethod, gotPath, gotAdminKey, gotBody string
+	bridge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		gotAdminKey = r.Header.Get("x-admin-key")
+		raw := make([]byte, r.ContentLength)
+		if r.ContentLength > 0 {
+			_, _ = r.Body.Read(raw)
+		}
+		gotBody = string(raw)
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"account":{"id":"acc3","label":"devin:a@b.c"},"verification":"verified"}`))
+	}))
+	defer bridge.Close()
+
+	resetUpstreamPools(t, upstreamAccountPool{Name: "devin-native", BaseURL: bridge.URL, AdminKey: "admin-key-1"})
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(
+		http.MethodPost,
+		"/api/upstream-account/pools/devin-native/devin-login",
+		strings.NewReader(`{"email":"a@b.c","password":"secret-pw"}`),
+	)
+	c.Params = gin.Params{{Key: "pool", Value: "devin-native"}}
+
+	DevinLoginUpstreamAccount(c)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, http.MethodPost, gotMethod)
+	assert.Equal(t, "/admin/accounts/devin-login", gotPath)
+	assert.Equal(t, "admin-key-1", gotAdminKey)
+	// The password transits to the bridge verbatim (it mints the credential
+	// there) and is never echoed back in the gateway response.
+	assert.Contains(t, gotBody, "secret-pw")
+	body := recorder.Body.String()
+	assert.Contains(t, body, "verified")
+	assert.NotContains(t, body, "secret-pw")
+	assert.NotContains(t, body, "admin-key-1")
+}
